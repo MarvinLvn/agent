@@ -9,6 +9,17 @@ pb2007:
   lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
   lab_resolution: 10000000
 
+pb2007small:
+  wav_pathname: ./external/raw_datasets/pb2007small/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007small/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [ 0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10 ]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007small/_lab/*.lab
+  lab_resolution: 10000000
+
 th2016:
   wav_pathname: ./external/raw_datasets/th2016/wav16/*.wav
   wav_rms_reference: pb2007
