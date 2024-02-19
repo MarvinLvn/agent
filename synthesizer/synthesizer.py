@@ -91,8 +91,8 @@ class Synthesizer:
 
         return synthesizer
 
-    def synthesize(self, art_seq):
-        nn_input = torch.FloatTensor(self.art_scaler.transform(art_seq)).to("cuda")
+    def synthesize(self, art_seq, device="cuda"):
+        nn_input = torch.FloatTensor(self.art_scaler.transform(art_seq)).to(device)
         with torch.no_grad():
             nn_output = self.nn(nn_input).cpu().numpy()
         sound_seq_pred = self.sound_scaler.inverse_transform(nn_output)

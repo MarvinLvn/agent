@@ -2,11 +2,11 @@ from torch import nn
 
 
 class FeedForward(nn.Module):
-    def __init__(self, x_dim, y_dim, hidden_dims, activation, dropout_p, batch_norm):
+    def __init__(self, x_dim, y_dim, hidden_dims, activation, dropout_p, batch_norm, add_sigmoid=False):
         super(FeedForward, self).__init__()
-        self.build(x_dim, y_dim, hidden_dims, activation, dropout_p, batch_norm)
+        self.build(x_dim, y_dim, hidden_dims, activation, dropout_p, batch_norm, add_sigmoid)
 
-    def build(self, x_dim, y_dim, hidden_dims, activation, dropout_p, batch_norm):
+    def build(self, x_dim, y_dim, hidden_dims, activation, dropout_p, batch_norm, add_sigmoid=False):
         layers = []
         prev_dim = x_dim
         for hidden_dim in hidden_dims:
@@ -30,6 +30,8 @@ class FeedForward(nn.Module):
             prev_dim = hidden_dim
 
         layers.append(nn.Linear(prev_dim, y_dim))
+        if add_sigmoid:
+            layers.append(nn.Sigmoid())
         self.nn = nn.Sequential(*layers)
 
     def forward(self, x):

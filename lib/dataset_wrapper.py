@@ -141,12 +141,14 @@ class Dataset:
 
     def cut_item_silences(self, item_name, item_data):
         item_lab = self.lab[item_name]
-        assert (
-            item_lab[0]["name"] in SILENCE_NAMES
-            and item_lab[-1]["name"] in SILENCE_NAMES
-        )
-        start = item_lab[0]["end"]
-        end = item_lab[-1]["start"]
+        if item_lab[0]["name"] in SILENCE_NAMES:
+            start = item_lab[0]["end"]
+        else:
+            start = item_lab[0]["start"]
+        if item_lab[-1]["name"] in SILENCE_NAMES:
+            end = item_lab[-1]["start"]
+        else:
+            end = item_lab[-1]["end"]
         return item_data[start:end]
 
     def get_item_wave(self, item_name):

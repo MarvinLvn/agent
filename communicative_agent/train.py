@@ -7,12 +7,10 @@ from communicative_agent import CommunicativeAgent
 
 from trainer import Trainer
 
-NB_TRAINING = 5
+NB_TRAINING = 1
 # DATASETS_NAME = ["pb2007", "msak0", "fsew0"]
 DATASETS_NAME = ["pb2007"]
 FRAME_PADDING = [2]
-JERK_LOSS_WEIGHTS = [0, 0.15]
-NB_DERIVATIVES = [0]
 ART_TYPE = "art_params"
 
 
@@ -56,7 +54,6 @@ def train_agent(agent, save_path):
 def main():
     final_configs = utils.read_yaml_file("communicative_agent/communicative_final_configs.yaml")
     final_quantizer_configs = utils.read_yaml_file("quantizer/quantizer_final_configs.yaml")
-
     for config_name, config in final_configs.items():
         quantizer_name = config_name.split("-")[0]
         quantizer_config = final_quantizer_configs["%s-cepstrum" % quantizer_name]
@@ -65,14 +62,12 @@ def main():
             quantizer_config["dataset"]["datasplit_seed"] = i_training
             quantizer_signature = utils.get_variable_signature(quantizer_config)
 
-            for jerk_loss_weight in JERK_LOSS_WEIGHTS:
-                config["sound_quantizer"]["name"] = "%s-%s" % (quantizer_signature, i_training)
-                config["training"]["jerk_loss_weight"] = jerk_loss_weight
+            config["sound_quantizer"]["name"] = "%s-%s" % (quantizer_signature, i_training)
 
-                agent = CommunicativeAgent(config)
-                signature = agent.get_signature()
-                save_path = "out/communicative_agent/%s-%s" % (signature, i_training)
-                train_agent(agent, save_path)
+            agent = CommunicativeAgent(config)
+            signature = agent.get_signature()
+            save_path = "out/communicative_agent/%s-%s" % (signature, i_training)
+            train_agent(agent, save_path)
 
 
 if __name__ == "__main__":

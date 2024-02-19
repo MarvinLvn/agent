@@ -5,7 +5,8 @@ import torch
 from lib.early_stopping import EarlyStopping
 from lib.training_record import TrainingRecord, EpochMetrics
 from lib.nn.pad_seqs_frames import pad_seqs_frames
-
+from lib.nn.simple_lstm import LSTM_FF
+from lib.nn.feedforward import FeedForward
 
 class Trainer:
     def __init__(
@@ -32,6 +33,7 @@ class Trainer:
         self.max_epochs = max_epochs
         self.patience = patience
         self.synthesizer = synthesizer
+        self.train_artloader, self.validation_artloader, self.test_artloader = synthesizer.get_dataloaders()
         self.sound_scalers = sound_scalers
         self.checkpoint_path = checkpoint_path
         self.device = device
@@ -51,14 +53,14 @@ class Trainer:
         for epoch in range(1, self.max_epochs + 1):
             print("== Epoch %s ==" % epoch)
 
-            train_metrics = epoch_fn(self.train_dataloader, is_training=True)
+            train_metrics = epoch_fn(self.train_dataloader, self.train_artloader, is_training=True)
             training_record.save_epoch_metrics("train", train_metrics)
 
-            validation_metrics = epoch_fn(self.validation_dataloader, is_training=False)
+            validation_metrics = epoch_fn(self.validation_dataloader, self.validation_artloader, is_training=False)
             training_record.save_epoch_metrics("validation", validation_metrics)
 
             if self.test_dataloader is not None:
-                test_metrics = epoch_fn(self.test_dataloader, is_training=False)
+                test_metrics = epoch_fn(self.test_dataloader, self.test_artloader, is_training=False)
                 training_record.save_epoch_metrics("test", test_metrics)
 
             early_stopping(validation_metrics.metrics[early_stopping_metric], self.nn)
@@ -71,9 +73,11 @@ class Trainer:
 
         self.nn.load_state_dict(torch.load(self.checkpoint_path))
 
-    def epoch_inverse_model(self, dataloader, is_training):
+    def epoch_inverse_model(self, dataloader, art_loader, is_training):
         nb_batch = len(dataloader)
         epoch_record = EpochMetrics(nb_batch)
+        if art_loader is not None:
+            art_loader_discriminator = iter(art_loader)
 
         if not is_training:
             self.nn.eval()
@@ -87,7 +91,7 @@ class Trainer:
 
                 with torch.no_grad():
                     _, _, sound_unit_seqs, _, _ = self.nn.sound_quantizer(
-                        sound_seqs, speaker_seqs
+                        sound_seqs, speaker_seqs    
                     )
                     sound_unit_seqs = sound_unit_seqs.detach()
                 if "direct_model" in self.optimizers:
@@ -106,7 +110,26 @@ class Trainer:
                     is_training=is_training,
                 )
 
+                if self.nn.discriminator_model is not None and art_loader is not None:
+                    try:
+                        # We sample a batch of real articulatory trajectories
+                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_discriminator)
+                        art_seqs = art_seqs.to(self.device)
+                    except StopIteration:
+                        # Recreate iterator when the whole data has been consumed
+                        art_loader_discriminator = iter(art_loader)
+                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_discriminator)
+                        art_seqs = art_seqs.to(self.device)
+                    self.step_discriminator(sound_unit_seqs, # Input to the generator from which to generate articulatory data
+                                            seqs_len,
+                                            seqs_mask,
+                                            art_seqs, # Real articulatory data
+                                            art_seqs_len,
+                                            art_seqs_mask,
+                                            epoch_record=epoch_record,
+                                            is_training=is_training)
         return epoch_record
+
 
     def step_direct_model(
         self, sound_unit_seqs, seqs_len, seqs_mask, epoch_record, is_training
@@ -149,7 +172,6 @@ class Trainer:
             self.nn.direct_model.requires_grad_(False)
             self.nn.sound_quantizer.eval()
             self.nn.sound_quantizer.requires_grad_(False)
-
             self.optimizers["inverse_model"].zero_grad()
 
         art_seqs_estimated = self.nn.inverse_model(sound_unit_seqs, seqs_len=seqs_len)
@@ -157,10 +179,13 @@ class Trainer:
         _, _, _, sound_unit_seqs_estimated = self.nn.sound_quantizer.encode(
             sound_seqs_estimated
         )
-
-        inverse_total, inverse_estimation_error, inverse_jerk = self.losses_fn[
+        if isinstance(self.nn.discriminator_model, LSTM_FF):
+            predicted_labels = self.nn.discriminator_model(art_seqs_estimated, seqs_len=seqs_len)
+        else:
+            predicted_labels = self.nn.discriminator_model(art_seqs_estimated[seqs_mask])
+        inverse_total, inverse_estimation_error, inverse_jerk, fool_discrimination_loss = self.losses_fn[
             "inverse_model"
-        ](art_seqs_estimated, sound_unit_seqs_estimated, sound_unit_seqs, seqs_mask)
+        ](art_seqs_estimated, sound_unit_seqs_estimated, sound_unit_seqs, seqs_mask, predicted_labels)
         if is_training:
             inverse_total.backward()
             self.optimizers["inverse_model"].step()
@@ -169,6 +194,7 @@ class Trainer:
             "inverse_model_estimation_error", inverse_estimation_error.item()
         )
         epoch_record.add("inverse_model_jerk", inverse_jerk.item())
+        epoch_record.add("fool_discrimination_loss", fool_discrimination_loss.item())
 
         # Inverse model repetition error
         # (inverse model estimation → synthesizer → sound quantizer encoder
@@ -184,3 +210,47 @@ class Trainer:
             sound_unit_seqs_produced, sound_unit_seqs, seqs_mask
         )
         epoch_record.add("inverse_model_repetition_error", repetition_error.item())
+
+    def step_discriminator(self, sound_unit_seqs, seqs_len, seqs_mask,
+                           art_frames, art_seqs_len, art_seqs_mask,
+                           epoch_record, is_training):
+        if is_training:
+            self.nn.discriminator_model.zero_grad()
+
+        # 1) Real batch training
+        if isinstance(self.nn.discriminator_model, LSTM_FF):
+            predicted_labels = self.nn.discriminator_model(art_frames, seqs_len=art_seqs_len)
+        else:
+            predicted_labels = self.nn.discriminator_model(art_frames[art_seqs_mask])
+        real_labels = torch.full(predicted_labels.shape, 1, dtype=torch.float).to(self.device)
+        real_discrimination_loss = self.losses_fn["bce"](predicted_labels, real_labels)
+        binarized_predicted_labels = (predicted_labels > .5).float()
+        real_accuracy = torch.sum(binarized_predicted_labels == real_labels) / real_labels.shape[0]
+        if is_training:
+            real_discrimination_loss.backward()
+
+        # 2) Fake batch training
+        # a) Generate fake articulatory data
+        fake_art_frames = self.nn.inverse_model(sound_unit_seqs, seqs_len=seqs_len).to(self.device)
+
+        # b) Predict labels
+        # We detach to only compute gradients for the discriminator and not the generator
+        if isinstance(self.nn.discriminator_model, LSTM_FF):
+            predicted_labels = self.nn.discriminator_model(fake_art_frames.detach(), seqs_len=seqs_len)
+        else:
+            predicted_labels = self.nn.discriminator_model(fake_art_frames[seqs_mask].detach())
+
+        real_labels = torch.full(predicted_labels.shape, 0, dtype=torch.float).to(self.device)
+        fake_discrimination_loss = self.losses_fn["bce"](predicted_labels, real_labels)
+        binarized_predicted_labels = (predicted_labels > .5).float()
+        fake_accuracy = torch.sum(binarized_predicted_labels == real_labels) / real_labels.shape[0]
+        if is_training:
+            fake_discrimination_loss.backward()
+            self.optimizers["discriminator_model"].step()
+
+        total_loss = (fake_discrimination_loss + real_discrimination_loss) / 2
+        total_accuracy = (real_accuracy + fake_accuracy) / 2
+        epoch_record.add("discrimination_loss", total_loss.item())
+        epoch_record.add("discrimination_accuracy", total_accuracy.item())
+        epoch_record.add("discrimination_fake_accuracy", fake_accuracy.item())
+        epoch_record.add("discrimination_real_accuracy", real_accuracy.item())
