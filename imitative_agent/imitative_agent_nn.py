@@ -2,10 +2,11 @@ from torch import nn
 
 
 class ImitativeAgentNN(nn.Module):
-    def __init__(self, inverse_model, direct_model):
+    def __init__(self, inverse_model, direct_model, discriminator_model=None):
         super(ImitativeAgentNN, self).__init__()
         self.inverse_model = inverse_model
         self.direct_model = direct_model
+        self.discriminator_model = discriminator_model
 
     def forward(self, sound_seqs):
         art_seqs_pred = self.inverse_model(sound_seqs)

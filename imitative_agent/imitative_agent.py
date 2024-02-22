@@ -6,9 +6,9 @@ from sklearn.preprocessing import StandardScaler
 
 from lib.base_agent import BaseAgent
 from lib.sound_dataloader import get_dataloaders
-from lib.nn.simple_lstm import SimpleLSTM
+from lib.nn.simple_lstm import SimpleLSTM, LSTM_FF
 from lib.nn.feedforward import FeedForward
-from lib.nn.loss import ceil_loss, compute_jerk_loss
+from lib.nn.loss import compute_jerk_loss
 
 from imitative_agent_nn import ImitativeAgentNN
 from synthesizer.synthesizer import Synthesizer
@@ -50,7 +50,30 @@ class ImitativeAgent(BaseAgent):
             model_config["direct_model"]["batch_norm"],
         )
 
-        self.nn = ImitativeAgentNN(inverse_model, direct_model).to("cuda")
+        discriminator_model = None
+        if 'discriminator_model' in self.config['model']:
+            if 'ff' in self.config['model']['discriminator_model']:
+                discriminator_model = FeedForward(
+                    self.art_dim,
+                    1,
+                    model_config["discriminator_model"]['ff']["hidden_layers"],
+                    model_config["discriminator_model"]['ff']["activation"],
+                    model_config["discriminator_model"]['ff']["dropout_p"],
+                    model_config["discriminator_model"]['ff']["batch_norm"],
+                    add_sigmoid=True,
+                )
+            elif 'rnn' in self.config['model']['discriminator_model']:
+                discriminator_model = LSTM_FF(
+                    self.art_dim,
+                    1,
+                    model_config["discriminator_model"]['rnn']['lstm']["hidden_size"],
+                    model_config["discriminator_model"]['rnn']['lstm']["num_layers"],
+                    model_config["discriminator_model"]['rnn']['lstm']["dropout_p"],
+                    model_config["discriminator_model"]['rnn']['lstm']["bidirectional"],
+                )
+            else:
+                raise ValueError('Discriminator should either be rnn or ff.')
+        self.nn = ImitativeAgentNN(inverse_model, direct_model, discriminator_model).to("cuda")
 
     def get_dataloaders(self):
         datasplits, dataloaders = get_dataloaders(
@@ -60,40 +83,54 @@ class ImitativeAgent(BaseAgent):
         return dataloaders
 
     def get_optimizers(self):
-        return {
-            "inverse_model": torch.optim.Adam(
-                self.nn.inverse_model.parameters(),
-                lr=self.config["training"]["learning_rate"],
-            ),
-            "direct_model": torch.optim.Adam(
+        optimizers = {}
+        optimizers["inverse_model"] = torch.optim.Adam(
+            self.nn.inverse_model.parameters(),
+            lr=self.config["training"]["learning_rate"]
+        )
+        optimizers["direct_model"] = torch.optim.Adam(
                 self.nn.direct_model.parameters(),
                 lr=self.config["training"]["learning_rate"],
-            ),
-        }
+            )
+        if "discriminator_model" in self.config["model"]:
+            optimizers["discriminator_model"] = torch.optim.Adam(
+                self.nn.discriminator_model.parameters(),
+                lr=self.config["training"]["discriminator_model_learning_rate"]
+            )
+        return optimizers
 
     def get_losses_fn(self):
         art_scaler_var = torch.FloatTensor(self.synthesizer.art_scaler.var_).to("cuda")
+        bce_loss = torch.nn.BCELoss()
 
-        def inverse_model_loss(art_seqs_pred, sound_seqs_pred, sound_seqs, seqs_mask):
+        def inverse_model_loss(art_seqs_pred, sound_seqs_pred, sound_seqs, seqs_mask, predicted_labels):
             reconstruction_error = (sound_seqs_pred - sound_seqs) ** 2
             reconstruction_loss = reconstruction_error[seqs_mask].mean()
 
             art_seqs_pred = art_seqs_pred * art_scaler_var
             jerk_loss = compute_jerk_loss(art_seqs_pred, seqs_mask)
 
-            total_loss = reconstruction_loss + (
-                ceil_loss(jerk_loss, self.config["training"]["jerk_loss_ceil"])
-                * self.config["training"]["jerk_loss_weight"]
+            # Fake labels are real for the generator
+            real_labels = torch.full(predicted_labels.shape, 1, dtype=torch.float).to(predicted_labels.device)
+            fool_discrimination_loss = bce_loss(predicted_labels, real_labels)
+
+            total_loss = (
+                    reconstruction_loss +
+                    jerk_loss * self.config["training"]["jerk_loss_weight"] +
+                    fool_discrimination_loss * self.config["training"]["discriminator_loss_weight"]
             )
 
-            return total_loss, reconstruction_loss, jerk_loss
+            return total_loss, reconstruction_loss, jerk_loss, fool_discrimination_loss
 
         def mse(sound_seqs_pred, sound_seqs, seqs_mask):
             reconstruction_error = (sound_seqs_pred - sound_seqs) ** 2
             reconstruction_loss = reconstruction_error[seqs_mask].mean()
             return reconstruction_loss
 
-        return {"inverse_model": inverse_model_loss, "mse": mse}
+        def bce(predicted_labels, real_labels):
+            return bce_loss(predicted_labels, real_labels)
+
+        return {"inverse_model": inverse_model_loss, "mse": mse, "bce": bce}
 
     def save(self, save_path):
         with open(save_path + "/config.yaml", "w") as f:

@@ -55,24 +55,18 @@ class LSTM_FF(nn.Module):
         self.output_layer = nn.Linear(d * self.hidden_size, self.y_dim)
         self.activation = nn.Sigmoid()
 
-    def forward(self, seqs, seqs_len=None):
+    def forward(self, seqs):
         with torch.backends.cudnn.flags(enabled=False):
             batch_size = seqs.shape[0]
-            if seqs_len != None:
-                seqs = pack_padded_sequence(seqs, seqs_len, batch_first=True)
 
             # We get the last hidden state to run the classif
             seqs, (hidden_state,cell_state) = self.lstm(seqs)
 
-            if seqs_len != None:
-                seqs, _ = nn.utils.rnn.pad_packed_sequence(seqs, batch_first=True)
-
             # Extract last hidden state
             d = 2 if self.bidirectional else 1
             # Concatenating the final forward and backward hidden states
-            #out = torch.cat((hidden_state[-2,:,:], hidden_state[-1,:,:]), dim=1)
-            #out = hidden_state[0].view(self.num_layers_lstm, d, batch_size, self.hidden_size_lstm)[-1]
             hidden_state = hidden_state.view(self.num_layers, d, batch_size, self.hidden_size)[-1]
+
             # Handle directions
             if d == 1:
                 out = hidden_state.squeeze(0)
