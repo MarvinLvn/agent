@@ -26,19 +26,26 @@ class Trainer:
         checkpoint_path,
         nb_frames_discriminator=1,
         device="cuda",
+        train_babloader=None,
+        validation_babloader=None,
+        test_babloader=None,
     ):
         self.nn = nn.to(device)
         self.optimizers = optimizers
         self.train_dataloader = train_dataloader
         self.validation_dataloader = validation_dataloader
         self.test_dataloader = test_dataloader
+        self.train_babloader = train_babloader
+        self.validation_babloader = validation_babloader
+        self.test_babloader = test_babloader
         self.losses_fn = losses_fn
         self.max_epochs = max_epochs
         self.patience = patience
         self.synthesizer = synthesizer
         self.train_artloader, self.validation_artloader, self.test_artloader = None, None, None
         if self.nn.discriminator_model is not None:
-            self.train_artloader, self.validation_artloader, self.test_artloader = synthesizer.get_dataloaders()
+            # Need to absolutely check what happens when True
+            self.train_artloader, self.validation_artloader, self.test_artloader = synthesizer.get_dataloaders(fit=True, transform=True)
         self.sound_scalers = sound_scalers
         self.checkpoint_path = checkpoint_path
         self.nb_frame_discriminators = nb_frames_discriminator
@@ -59,14 +66,14 @@ class Trainer:
         for epoch in range(1, self.max_epochs + 1):
             print("== Epoch %s ==" % epoch)
 
-            train_metrics = epoch_fn(self.train_dataloader, self.train_artloader, is_training=True)
+            train_metrics = epoch_fn(self.train_dataloader, self.train_babloader, self.train_artloader, is_training=True)
             training_record.save_epoch_metrics("train", train_metrics)
 
-            validation_metrics = epoch_fn(self.validation_dataloader, self.validation_artloader, is_training=False)
+            validation_metrics = epoch_fn(self.validation_dataloader, self.validation_babloader, self.validation_artloader, is_training=False)
             training_record.save_epoch_metrics("validation", validation_metrics)
 
             if self.test_dataloader is not None:
-                test_metrics = epoch_fn(self.test_dataloader, self.test_artloader, is_training=False)
+                test_metrics = epoch_fn(self.test_dataloader, self.test_babloader, self.test_artloader, is_training=False)
                 training_record.save_epoch_metrics("test", test_metrics)
 
             early_stopping(validation_metrics.metrics[early_stopping_metric], self.nn)
@@ -79,11 +86,14 @@ class Trainer:
 
         self.nn.load_state_dict(torch.load(self.checkpoint_path))
 
-    def epoch_inverse_model(self, dataloader, art_loader, is_training):
+    def epoch_inverse_model(self, dataloader, bab_loader, art_loader, is_training):
         nb_batch = len(dataloader)
         epoch_record = EpochMetrics(nb_batch)
+
+        if bab_loader is not None:
+            bab_loader_iter = iter(bab_loader)
         if art_loader is not None:
-            art_loader_discriminator = iter(art_loader)
+            art_loader_iter = iter(art_loader)
 
         if not is_training:
             self.nn.eval()
@@ -91,9 +101,8 @@ class Trainer:
         with torch.no_grad() if not is_training else nullcontext():
             for batch in tqdm(dataloader, total=nb_batch, leave=False):
                 sound_seqs, seqs_len, seqs_mask = batch
-                sound_seqs = sound_seqs.to("cuda")
-                seqs_mask = seqs_mask.to("cuda")
-
+                sound_seqs = sound_seqs.to(self.device)
+                seqs_mask = seqs_mask.to(self.device)
                 self.step_direct_model(
                     sound_seqs,
                     seqs_len,
@@ -110,15 +119,26 @@ class Trainer:
                     is_training=is_training,
                 )
 
+                if bab_loader is not None:
+                    try:
+                        bab_art_seqs, bab_sound_seqs, bab_seqs_len, bab_seqs_mask = next(bab_loader_iter)
+                        bab_art_seqs, bab_sound_seqs, bab_seqs_mask = bab_art_seqs.to(self.device), bab_sound_seqs.to(self.device), bab_seqs_mask.to(self.device)
+                    except StopIteration:
+                        bab_loader_iter = iter(bab_loader)
+                        bab_art_seqs, bab_sound_seqs, bab_seqs_len, bab_seqs_mask = next(bab_loader_iter)
+                        bab_art_seqs, bab_sound_seqs, bab_seqs_mask = bab_art_seqs.to(self.device), bab_sound_seqs.to(self.device), bab_seqs_mask.to(self.device)
+                    self.step_babbling(bab_sound_seqs, bab_art_seqs, bab_seqs_len, bab_seqs_mask,
+                                       epoch_record=epoch_record, is_training=is_training)
+
                 if self.nn.discriminator_model is not None and art_loader is not None:
                     try:
                         # We sample a batch of real articulatory trajectories
-                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_discriminator)
+                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_iter)
                         art_seqs = art_seqs.to(self.device)
                     except StopIteration:
                         # Recreate iterator when the whole data has been consumed
-                        art_loader_discriminator = iter(art_loader)
-                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_discriminator)
+                        art_loader_iter = iter(art_loader)
+                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_iter)
                         art_seqs = art_seqs.to(self.device)
                     self.step_discriminator(sound_seqs,
                                             # Input to the generator from which to generate articulatory data
@@ -172,7 +192,6 @@ class Trainer:
 
         art_seqs_estimated = self.nn.inverse_model(sound_seqs, seqs_len=seqs_len)
         sound_seqs_estimated = self.nn.direct_model(art_seqs_estimated)
-
         if isinstance(self.nn.discriminator_model, LSTM_FF):
             unfolded_art = self.__create_sliding_windows(art_seqs_estimated, seqs_mask, self.nb_frame_discriminators)
             predicted_labels = self.nn.discriminator_model(unfolded_art)
@@ -182,6 +201,7 @@ class Trainer:
         inverse_total, inverse_estimation_error, inverse_jerk, fool_discrimination_loss = self.losses_fn[
             "inverse_model"
         ](art_seqs_estimated, sound_seqs_estimated, sound_seqs, seqs_mask, predicted_labels)
+
         if is_training:
             inverse_total.backward()
             self.optimizers["inverse_model"].step()
@@ -202,7 +222,7 @@ class Trainer:
         )
         epoch_record.add("inverse_model_repetition_error", repetition_error.item())
 
-    def step_discriminator(self, sound_unit_seqs, seqs_len, seqs_mask,
+    def step_discriminator(self, sound_seqs, seqs_len, seqs_mask,
                            art_seqs, art_seqs_len, art_seqs_mask,
                            epoch_record, is_training):
         if is_training:
@@ -223,7 +243,7 @@ class Trainer:
 
         # 2) Fake batch training
         # a) Generate fake articulatory data
-        fake_art_seqs = self.nn.inverse_model(sound_unit_seqs, seqs_len=seqs_len).to(self.device)
+        fake_art_seqs = self.nn.inverse_model(sound_seqs, seqs_len=seqs_len).to(self.device)
 
         # b) Predict labels
         # We detach to only compute gradients for the discriminator and not the generator
@@ -247,6 +267,27 @@ class Trainer:
         epoch_record.add("discrimination_accuracy", total_accuracy.item())
         epoch_record.add("discrimination_fake_accuracy", fake_accuracy.item())
         epoch_record.add("discrimination_real_accuracy", real_accuracy.item())
+
+    def step_babbling(self, sound_seqs, art_seqs, seqs_len, seqs_mask, epoch_record, is_training):
+        if is_training:
+            self.nn.inverse_model.train()
+            self.nn.direct_model.eval()
+            self.nn.direct_model.requires_grad_(False)
+            self.optimizers["inverse_model"].zero_grad()
+
+        art_seqs_estimated = self.nn.inverse_model(sound_seqs, seqs_len=seqs_len)
+
+        babbling_loss = self.losses_fn['mse'](art_seqs_estimated, art_seqs, seqs_mask)
+        # max_values = [art_seqs_estimated[:, :, i].max().item() for i in range(6)]
+        # min_values = [art_seqs_estimated[:, :, i].min().item() for i in range(6)]
+        # print("B MAX", max_values)
+        # print("B MIN", min_values)
+
+        if is_training:
+            babbling_loss.backward()
+            self.optimizers["inverse_model"].step()
+        epoch_record.add("babbling_loss", babbling_loss.item())
+
 
     @staticmethod
     def __create_sliding_windows(art_seqs, art_seqs_mask, nb_frames):

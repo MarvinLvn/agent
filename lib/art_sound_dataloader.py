@@ -46,7 +46,7 @@ class ArtSoundDataset(torch.utils.data.Dataset):
         return self.len
 
 
-def get_dataloaders(dataset_config, art_scaler, sound_scaler, datasplits):
+def get_dataloaders(dataset_config, art_scaler, sound_scaler, datasplits, fit=True, transform=True):
     dataset = Dataset(dataset_config["name"])
     art_data = dataset.get_items_data(dataset_config["art_type"], cut_silences=True)
     sound_data = dataset.get_items_data(dataset_config["sound_type"], cut_silences=True)
@@ -64,24 +64,34 @@ def get_dataloaders(dataset_config, art_scaler, sound_scaler, datasplits):
         if len(split_items) == 0:
             dataloaders.append(None)
             continue
-
         split_art_seqs = [art_data[split_item] for split_item in split_items]
         split_sound_seqs = [sound_data[split_item] for split_item in split_items]
 
         if i_datasplit == 0:
             split_art_concat = np.concatenate(split_art_seqs)
             split_sound_concat = np.concatenate(split_sound_seqs)
-            art_scaler.fit(split_art_concat)
-            sound_scaler.fit(split_sound_concat)
+            if fit:
+                art_scaler.fit(split_art_concat)
+                sound_scaler.fit(split_sound_concat)
+        if transform:
+            split_art_seqs = [
+                torch.FloatTensor(art_scaler.transform(split_art_seq))
+                for split_art_seq in split_art_seqs
+            ]
+            split_sound_seqs = [
+                torch.FloatTensor(sound_scaler.transform(split_sound_seq))
+                for split_sound_seq in split_sound_seqs
+            ]
+        else:
+            split_art_seqs = [
+                torch.FloatTensor(split_art_seq)
+                for split_art_seq in split_art_seqs
+            ]
+            split_sound_seqs = [
+                torch.FloatTensor(split_sound_seq)
+                for split_sound_seq in split_sound_seqs
+            ]
 
-        split_art_seqs = [
-            torch.FloatTensor(art_scaler.transform(split_art_seq))
-            for split_art_seq in split_art_seqs
-        ]
-        split_sound_seqs = [
-            torch.FloatTensor(sound_scaler.transform(split_sound_seq))
-            for split_sound_seq in split_sound_seqs
-        ]
 
         split_dataloader = torch.utils.data.DataLoader(
             ArtSoundDataset(split_art_seqs, split_sound_seqs),

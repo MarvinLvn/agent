@@ -9,21 +9,19 @@ from trainer import Trainer
 
 NB_TRAINING=1
 ART_MODALITY = "art_params"
-# DATASETS_NAME = ["pb2007", "msak0", "fsew0"]
-DATASETS_NAME = ["pb2007"]
-DISCRIMINATOR_LOSS_WEIGHTS = [0] #[0, 0.01, 0.1, 1, 10]
-LIST_NB_DISCRIMINATOR_FRAMES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
+#DISCRIMINATOR_LOSS_WEIGHTS = [1] #[0, 0.01, 0.1, 1, 1]
+#JERK_LOSS_WEIGHTS = [0, 0.01, 0.1, 1]
+#NB_FRAMES_DISCRIMINATOR = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+DATASPLIT_SEEDS = [0, 1, 2, 3, 4]
 def main():
-    for i_training in range(NB_TRAINING):
-        for dataset_name in DATASETS_NAME:
-            for nb_frames_discriminator in LIST_NB_DISCRIMINATOR_FRAMES:
-                agent_config = utils.read_yaml_file(
-                    "imitative_agent/imitative_config.yaml"
-                )
-                agent_config["dataset"]["names"] = [dataset_name]
-                agent_config["model"]["discriminator_model"]["nb_frames"] = nb_frames_discriminator
-
+    configs = utils.read_yaml_file("imitative_agent/imitative_config2.yaml")
+    for config_name, agent_config in configs.items():
+        for i_training in range(NB_TRAINING):
+            for datasplit_seed in DATASPLIT_SEEDS:
+                #for nb_frames in NB_FRAMES_DISCRIMINATOR:
+                agent_config['dataset']['datasplit_seed'] = datasplit_seed
+                #agent_config['training']['discriminator_loss_weight'] = discriminator_loss_weight
+                #agent_config['model']['discriminator_model']['nb_frames'] = nb_frames
                 agent = ImitativeAgent(agent_config)
                 signature = agent.get_signature()
                 save_path = "out/imitative_agent/%s-%s" % (signature, i_training)
@@ -35,6 +33,7 @@ def main():
                     continue
 
                 dataloaders = agent.get_dataloaders()
+                babbling_dataloaders = agent.get_babbling_dataloaders()
                 optimizers = agent.get_optimizers()
                 losses_fn = agent.get_losses_fn()
 
@@ -66,6 +65,8 @@ def main():
                     sound_scalers,
                     "./out/checkpoint.pt",
                     nb_frames_discriminator,
+                    'cuda',
+                    *babbling_dataloaders,
                 )
                 metrics_record = trainer.train()
 

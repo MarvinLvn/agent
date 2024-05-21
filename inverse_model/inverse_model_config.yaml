@@ -1,0 +1,20 @@
+pb2007:
+  model:
+    inverse_model:
+      num_layers: 2
+      hidden_size: 64
+      dropout_p: 0.17
+      bidirectional: true
+  training:
+    inverse_model_learning_rate: 0.0017
+    max_epochs: 500
+    patience: 30
+  dataset:
+    name: pb2007
+    sound_type: cepstrum
+    art_type: art_params
+    datasplits_size: [64, 16, 20]
+    datasplit_seed: 0
+    batch_size: 8
+    num_workers: 6
+    shuffle_between_epochs: true

@@ -5,6 +5,7 @@ from tqdm import tqdm
 from scipy.io import wavfile
 import pickle
 import math
+import os
 
 from lib import utils
 from lib import art_model
@@ -18,7 +19,12 @@ def rms(y):
 
 
 def compute_wav_rms(wav_pathname):
-    wavfiles_path = glob(wav_pathname)
+    wavfiles_path = list(glob(wav_pathname))
+
+    # No need to compute the rms on every single file
+    # + this does not fit in memory when processing a large number of files
+    if len(wavfiles_path) > 1000:
+        wavfiles_path = wavfiles_path[:1000]
 
     dataset_pcm = []
     for wavfile_path in tqdm(wavfiles_path):
@@ -41,7 +47,6 @@ def preprocess_wav(
         wav_scaling_factor = np.sqrt(target_wav_rms ** 2 / dataset_wav_rms ** 2)
 
     wavfiles_path = glob(wav_pathname)
-
     for wavfile_path in tqdm(wavfiles_path):
         pcm, wavfile_sampling_rate = librosa.load(wavfile_path, sr=None)
 
@@ -52,7 +57,8 @@ def preprocess_wav(
         pcm = pcm * INT16_MAX_VALUE
         assert np.abs(pcm).max() <= INT16_MAX_VALUE
         pcm = pcm.astype("int16")
-        item_name = utils.parse_item_name(wavfile_path)
+        item_name = utils.parse_item_name(wavfile_path) if not dataset_name.startswith('librispeech') \
+            else os.path.basename(wavfile_path)
         wavfile.write("%s/%s.wav" % (export_dir, item_name), target_sampling_rate, pcm)
 
 
@@ -64,7 +70,6 @@ def extract_cepstrum_and_source(dataset_name):
 
     wavfiles_dir = "datasets/%s/wav" % dataset_name
     wavfiles_path = glob("%s/*.wav" % wavfiles_dir)
-
     for wavfile_path in tqdm(wavfiles_path):
         item_name = utils.parse_item_name(wavfile_path)
 
@@ -174,73 +179,79 @@ def main():
     datasets_wav_rms = {}
 
     for dataset_name, dataset_infos in datasets_infos.items():
-        print("Preprocessing %s..." % dataset_name)
+        if dataset_name == 'pb2007' or dataset_name.startswith('librispeech'):
 
-        wavfiles_path = glob(dataset_infos["wav_pathname"])
-        if len(wavfiles_path) == 0:
-            print("Dataset %s not found" % dataset_name)
-            print("")
-            continue
+            print("Preprocessing %s..." % dataset_name)
 
-        print("Computing RMS...")
-        dataset_wav_rms = compute_wav_rms(dataset_infos["wav_pathname"])
-        datasets_wav_rms[dataset_name] = dataset_wav_rms
-        print("Computing RMS done")
+            wavfiles_path = glob(dataset_infos["wav_pathname"])
 
-        print("Resampling WAV files...")
-        target_wav_rms = (
-            datasets_wav_rms[dataset_infos["wav_rms_reference"]]
-            if "wav_rms_reference" in dataset_infos
-            else None
-        )
-        preprocess_wav(
-            dataset_name,
-            dataset_infos["wav_pathname"],
-            features_config["wav_sampling_rate"],
-            dataset_wav_rms,
-            target_wav_rms,
-        )
-        print("Resampling WAV files done")
+            if len(wavfiles_path) == 0:
+                print("Dataset %s not found" % dataset_name)
+                print("")
+                continue
 
-        print("Extracting cepstrograms and source parameters...")
-        extract_cepstrum_and_source(dataset_name)
-        print("Extracting cepstrograms and source parameters done")
+            print("Computing RMS...")
+            dataset_wav_rms = compute_wav_rms(dataset_infos["wav_pathname"])
+            datasets_wav_rms[dataset_name] = dataset_wav_rms
+            print("Computing RMS done")
 
-        if "ema_pathname" in dataset_infos:
-            frames_sampling_rate = features_config["ema_sampling_rate"]
-
-            print("Preprocessing EMA...")
-            items_ema = preprocess_ema(
-                dataset_name,
-                dataset_infos["ema_pathname"],
-                dataset_infos["ema_format"],
-                dataset_infos["ema_sampling_rate"],
-                dataset_infos["ema_scaling_factor"],
-                dataset_infos["ema_coils_order"],
-                dataset_infos["ema_needs_lowpass"],
-                frames_sampling_rate,
+            print("Resampling WAV files...")
+            target_wav_rms = (
+                datasets_wav_rms[dataset_infos["wav_rms_reference"]]
+                if "wav_rms_reference" in dataset_infos
+                else None
             )
-            print("Preprocessing EMA done")
 
-            print("Extracting articulatory model and parameters...")
-            extract_art_parameters(dataset_name, items_ema)
-            print("Extracting articulatory model and parameters done")
+            preprocess_wav(
+                dataset_name,
+                dataset_infos["wav_pathname"],
+                features_config["wav_sampling_rate"],
+                dataset_wav_rms,
+                target_wav_rms,
+            )
+            print("Resampling WAV files done")
 
-        print("Resampling LAB files...")
-        preprocess_lab(
-            dataset_name,
-            dataset_infos["lab_pathname"],
-            dataset_infos["lab_resolution"],
-            frames_sampling_rate,
-        )
-        print("Resampling LAB files done")
+            print("Extracting cepstrograms and source parameters...")
+            extract_cepstrum_and_source(dataset_name)
+            continue
+            print("Extracting cepstrograms and source parameters done")
 
-        print("Preprocessing %s done" % dataset_name)
-        print("")
+            if "ema_pathname" in dataset_infos:
+                frames_sampling_rate = features_config["ema_sampling_rate"]
 
-        # TODO: add the palate importation
-        # it should be placed in a palate.bin file placed at the root of the ./datasets/DATASET_NAME folder
-        # it should be a float32 numpy array of shape (point_number, 2) saved with array.tofile
+                print("Preprocessing EMA...")
+                items_ema = preprocess_ema(
+                    dataset_name,
+                    dataset_infos["ema_pathname"],
+                    dataset_infos["ema_format"],
+                    dataset_infos["ema_sampling_rate"],
+                    dataset_infos["ema_scaling_factor"],
+                    dataset_infos["ema_coils_order"],
+                    dataset_infos["ema_needs_lowpass"],
+                    frames_sampling_rate,
+                )
+                print("Preprocessing EMA done")
+
+                print("Extracting articulatory model and parameters...")
+                extract_art_parameters(dataset_name, items_ema)
+                print("Extracting articulatory model and parameters done")
+
+            if "lab_pathname" in dataset_infos:
+                print("Resampling LAB files...")
+                preprocess_lab(
+                    dataset_name,
+                    dataset_infos["lab_pathname"],
+                    dataset_infos["lab_resolution"],
+                    frames_sampling_rate,
+                )
+                print("Resampling LAB files done")
+
+            print("Preprocessing %s done" % dataset_name)
+            print("")
+
+            # TODO: add the palate importation
+            # it should be placed in a palate.bin file placed at the root of the ./datasets/DATASET_NAME folder
+            # it should be a float32 numpy array of shape (point_number, 2) saved with array.tofile
 
 
 if __name__ == "__main__":

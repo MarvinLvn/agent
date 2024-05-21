@@ -1,0 +1,37 @@
+librispeech_10_mn:
+  model:
+    direct_model:
+      hidden_layers: [512, 512, 512, 512]
+      activation: relu
+      batch_norm: true
+      dropout_p: 0.13
+    inverse_model:
+      num_layers: 2
+      hidden_size: 64
+      dropout_p: 0.17
+      bidirectional: true
+    discriminator_model:
+      ff:
+        hidden_layers: [ 32, 16 ]
+        activation: relu
+        dropout_p: 0.25
+        batch_norm: true
+  synthesizer:
+    name: ea587b76c95fecef01cfd16c7f5f289d-3
+  dataset:
+    names: [librispeech_10_mn]
+    sound_type: cepstrum
+    datasplits_size: [64, 16, 20] # train/validation/test in percentage
+    datasplit_seed: 0
+    batch_size: 8
+    num_workers: 6
+    shuffle_between_epochs: true
+    audio_only: true
+  training:
+    learning_rate: 0.0017
+    discriminator_model_learning_rate: 0.002
+    max_epochs: 500
+    patience: 30
+    jerk_loss_weight: 0
+    discriminator_loss_weight: 0
+

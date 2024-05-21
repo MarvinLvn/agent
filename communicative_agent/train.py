@@ -53,16 +53,15 @@ def train_agent(agent, save_path):
 
 def main():
     final_configs = utils.read_yaml_file("communicative_agent/communicative_final_configs.yaml")
-    final_quantizer_configs = utils.read_yaml_file("quantizer/quantizer_final_configs.yaml")
+    #final_quantizer_configs = utils.read_yaml_file("quantizer/quantizer_final_configs.yaml")
     for config_name, config in final_configs.items():
-        quantizer_name = config_name.split("-")[0]
-        quantizer_config = final_quantizer_configs["%s-cepstrum" % quantizer_name]
+        #quantizer_name = config_name.split("-")[0]
+        #quantizer_config = final_quantizer_configs["%s-cepstrum" % quantizer_name]
 
         for i_training in range(NB_TRAINING):
-            quantizer_config["dataset"]["datasplit_seed"] = i_training
-            quantizer_signature = utils.get_variable_signature(quantizer_config)
-
-            config["sound_quantizer"]["name"] = "%s-%s" % (quantizer_signature, i_training)
+            #quantizer_config["dataset"]["datasplit_seed"] = i_training
+            #quantizer_signature = utils.get_variable_signature(quantizer_config)
+            #config["sound_quantizer"]["name"] = "%s-%s" % (quantizer_signature, i_training)
 
             agent = CommunicativeAgent(config)
             signature = agent.get_signature()

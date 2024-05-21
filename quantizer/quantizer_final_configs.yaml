@@ -1,4 +1,27 @@
-pb2007-art_params:
+#gbth-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [gb2016,th2016]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: 0
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+pb2007-agent_art_communicative_jerk_gan_0:
   model:
     hidden_dims: [256, 256, 256]
     activation: relu
@@ -11,9 +34,9 @@ pb2007-art_params:
     use_speaker_id: true
   dataset:
     names: [pb2007]
-    data_types: [art_params]
+    data_types: [agent_art_communicative_jerk_gan_0]
     datasplits_size: [64, 16, 20]
-    datasplit_seed: null
+    datasplit_seed: 0
     batch_size: 8
     num_workers: 6
     shuffle_between_epochs: true
@@ -22,50 +45,754 @@ pb2007-art_params:
     max_epochs: 500
     patience: 25
 
-pb2007-cepstrum:
+pb2007-agent_art_communicative_jerk_gan_2:
   model:
-    hidden_dims: [512, 512]
+    hidden_dims: [256, 256, 256]
     activation: relu
-    dropout_p: 0.2
+    dropout_p: 0.32
     batch_norm: true
     frame_padding: 2
     num_embeddings: 512
     embedding_dim: 64
-    commitment_cost: 1.6
+    commitment_cost: 1.08
     use_speaker_id: true
   dataset:
     names: [pb2007]
-    data_types: [cepstrum]
-    datasplits_size: [64, 16, 20] # train/validation/test in percentage
-    datasplit_seed: null
+    data_types: [agent_art_communicative_jerk_gan_2]
+    datasplits_size: [64, 16, 20]
+    datasplit_seed: 1
     batch_size: 8
     num_workers: 6
     shuffle_between_epochs: true
   training:
-    learning_rate: 0.0006
+    learning_rate: 0.002
     max_epochs: 500
     patience: 25
 
-pb2007-cepstrum,art_params:
+pb2007-agent_art_communicative_jerk_gan_3:
   model:
-    hidden_dims: [128, 128]
+    hidden_dims: [256, 256, 256]
     activation: relu
-    dropout_p: 0.1
+    dropout_p: 0.32
     batch_norm: true
     frame_padding: 2
     num_embeddings: 512
-    embedding_dim: 128
-    commitment_cost: 1.7
+    embedding_dim: 64
+    commitment_cost: 1.08
     use_speaker_id: true
   dataset:
     names: [pb2007]
-    data_types: [cepstrum, art_params]
-    datasplits_size: [64, 16, 20] # train/validation/test in percentage
-    datasplit_seed: null
+    data_types: [agent_art_communicative_jerk_gan_3]
+    datasplits_size: [64, 16, 20]
+    datasplit_seed: 2
     batch_size: 8
     num_workers: 6
     shuffle_between_epochs: true
   training:
-    learning_rate: 0.0008
+    learning_rate: 0.002
     max_epochs: 500
     patience: 25
+
+#pb2007-agent_art_c867a86361f5dd96f60b7a7b79b267f9-0:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 512
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [agent_art_c867a86361f5dd96f60b7a7b79b267f9-0]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#pb2007-agent_art_7d27a9fd0a7e43770906659f847f592a-0:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 512
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [agent_art_7d27a9fd0a7e43770906659f847f592a-0]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#pb2007-agent_art_7c91e8cbb4548388e10585f73f91198e-0:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 512
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [agent_art_7c91e8cbb4548388e10585f73f91198e-0]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#pb2007-agent_art_512d564ca97647a589cdc2c94dd20f20-0:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 512
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [agent_art_512d564ca97647a589cdc2c94dd20f20-0]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#
+#pb2007-agent_art_12c2baf464b1696ea935fe9d4445f0f1-0:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 512
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [agent_art_12c2baf464b1696ea935fe9d4445f0f1-0]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#pb2007-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 512
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: 0
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+
+#pb2007-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 512
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+
+#pb2007-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [pb2007]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#
+##
+#faet0-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [faet0]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#faet0-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [faet0]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+#
+#faet0-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [faet0]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#
+##
+#falh0-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [falh0]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#falh0-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [falh0]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+#
+#falh0-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [falh0]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#
+##
+#ffes0-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [ffes0]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#ffes0-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [ffes0]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+#
+#ffes0-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [ffes0]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#
+##
+#fjmw0-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [fjmw0]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#fjmw0-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [fjmw0]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+#
+#fjmw0-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [fjmw0]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#
+##
+#fsew0-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [fsew0]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#fsew0-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [fsew0]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+#
+#fsew0-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [fsew0]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#
+##
+#mjjn0-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [mjjn0]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#mjjn0-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [mjjn0]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+#
+#mjjn0-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [mjjn0]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#
+##
+#msak0-art_params:
+#  model:
+#    hidden_dims: [256, 256, 256]
+#    activation: relu
+#    dropout_p: 0.32
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.08
+#    use_speaker_id: true
+#  dataset:
+#    names: [msak0]
+#    data_types: [art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.002
+#    max_epochs: 500
+#    patience: 25
+#
+#msak0-cepstrum:
+#  model:
+#    hidden_dims: [512, 512]
+#    activation: relu
+#    dropout_p: 0.2
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 64
+#    commitment_cost: 1.6
+#    use_speaker_id: true
+#  dataset:
+#    names: [msak0]
+#    data_types: [cepstrum]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0006
+#    max_epochs: 500
+#    patience: 25
+#
+#msak0-cepstrum,art_params:
+#  model:
+#    hidden_dims: [128, 128]
+#    activation: relu
+#    dropout_p: 0.1
+#    batch_norm: true
+#    frame_padding: 2
+#    num_embeddings: 50
+#    embedding_dim: 128
+#    commitment_cost: 1.7
+#    use_speaker_id: true
+#  dataset:
+#    names: [msak0]
+#    data_types: [cepstrum, art_params]
+#    datasplits_size: [64, 16, 20]
+#    datasplit_seed: null
+#    batch_size: 8
+#    num_workers: 6
+#    shuffle_between_epochs: true
+#  training:
+#    learning_rate: 0.0008
+#    max_epochs: 500
+#    patience: 25
+#

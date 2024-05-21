@@ -38,9 +38,9 @@ class Synthesizer:
             model_config["batch_norm"],
         ).to("cuda")
 
-    def get_dataloaders(self):
+    def get_dataloaders(self, fit=True, transform=True):
         datasplits, dataloaders = get_dataloaders(
-            self.config["dataset"], self.art_scaler, self.sound_scaler, self.datasplits
+            self.config["dataset"], self.art_scaler, self.sound_scaler, self.datasplits, fit, transform
         )
         self.datasplits = datasplits
         return dataloaders

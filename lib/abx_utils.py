@@ -55,8 +55,10 @@ def get_phone_features(datasets_features, features_type, phone_index):
 
 
 def get_abx_matrix(
-    phones, phones_indexes, datasets_features, distance, samples_per_pair
+    phones, phones_indexes, datasets_features, distance, samples_per_pair, seed=None
 ):
+    if seed is not None:
+        random.seed(seed)
     nb_phones = len(phones)
     matrix_nb_success = np.zeros((nb_phones, nb_phones), dtype="int")
     matrix_nb_test = np.zeros((nb_phones, nb_phones), dtype="int")
@@ -76,7 +78,6 @@ def get_abx_matrix(
             for _ in range(samples_per_pair):
                 a_index, x_index = random.sample(ax_indexes, 2)
                 b_index = random.choice(b_indexes)
-
                 if conduct_abx_test(
                     distance, datasets_features, a_index, b_index, x_index
                 ):

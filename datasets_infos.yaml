@@ -9,6 +9,197 @@ pb2007:
   lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
   lab_resolution: 10000000
 
+M0_10_mn:
+  wav_pathname: /home/engaclew/agent/datasets/M0_10_mn/*.wav
+  audio_only: true
+
+M0_60_mn:
+  wav_pathname: /home/engaclew/agent/datasets/M0_60_mn/*.wav
+  audio_only: true
+
+M0_600_mn:
+  wav_pathname: /home/engaclew/agent/datasets/M0_600_mn/*.wav
+  audio_only: true
+
+M0_6000_mn:
+  wav_pathname: /home/engaclew/agent/datasets/M0_6000_mn/*.wav
+  audio_only: true
+
+2_speakers_6000_mn:
+  wav_pathname: /home/engaclew/agent/datasets/2_speakers_6000_mn/*.wav
+  audio_only: true
+
+4_speakers_6000_mn:
+  wav_pathname: /home/engaclew/agent/datasets/4_speakers_6000_mn/*.wav
+  audio_only: true
+
+8_speakers_6000_mn:
+  wav_pathname: /home/engaclew/agent/datasets/8_speakers_6000_mn/*.wav
+  audio_only: true
+
+librispeech_10_mn:
+  wav_pathname: /home/engaclew/agent/datasets/librispeech_10_mn/*.wav
+  wav_rms_reference: pb2007
+  audio_only: true
+
+librispeech_60_mn:
+   wav_pathname: /home/engaclew/agent/datasets/librispeech_60_mn/*.wav
+   wav_rms_reference: pb2007
+   audio_only: true
+
+librispeech_600_mn:
+   wav_pathname: /home/engaclew/agent/datasets/librispeech_600_mn/*.wav
+   wav_rms_reference: pb2007
+   audio_only: true
+
+librispeech_6000_mn:
+   wav_pathname: /home/engaclew/agent/datasets/librispeech_6000_mn/*.wav
+   wav_rms_reference: pb2007
+   audio_only: true
+
+pb2007_babbling_no_aug_random_0:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_babbling_no_aug_random_1:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_babbling_no_aug_random_2:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_babbling_no_aug_random_3:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_babbling_no_aug_random_4:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_babbling_phase_random_0:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_babbling_phase_random_1:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_babbling_phase_random_2:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+  
+pb2007_babbling_phase_random_3:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+  
+pb2007_babbling_phase_random_4:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+    
+pb2007_babbling_phase:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+  
+pb2007_babbling_no_aug:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
+pb2007_listening_phase:
+  wav_pathname: ./external/raw_datasets/pb2007/_wav16/*.wav
+  ema_pathname: ./external/raw_datasets/pb2007/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
+  lab_resolution: 10000000
+
 pb2007small:
   wav_pathname: ./external/raw_datasets/pb2007small/_wav16/*.wav
   ema_pathname: ./external/raw_datasets/pb2007small/_seq/*.seq
@@ -35,25 +226,85 @@ gb2016:
   phones_infos: pb2007
 
 fsew0:
-  wav_pathname: ./external/raw_datasets/fsew0/*.wav
-  ema_pathname: ./external/raw_datasets/fsew0/*.ema
+  wav_pathname: /home/engaclew/agent/datasets/fsew0/wav/*.wav
+  ema_pathname: /home/engaclew/agent/datasets/fsew0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17]
   ema_needs_lowpass: true
-  lab_pathname: ./external/raw_datasets/fsew0/*.lab
+  lab_pathname: /home/engaclew/agent/datasets/fsew0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha
 
 msak0:
-  wav_pathname: ./external/raw_datasets/msak0/*.wav
-  ema_pathname: ./external/raw_datasets/msak0/*.ema
+  wav_pathname: /home/engaclew/agent/datasets/msak0/wav/*.wav
+  ema_pathname: /home/engaclew/agent/datasets/msak0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17]
   ema_needs_lowpass: true
-  lab_pathname: ./external/raw_datasets/msak0/*.lab
+  lab_pathname: /home/engaclew/agent/datasets/msak0/lab/*.lab
+  lab_resolution: 1
+  phones_infos: mocha
+
+fjmw0:
+  wav_pathname: /home/engaclew/agent/datasets/fjmw0/wav/*.wav
+  ema_pathname: /home/engaclew/agent/datasets/fjmw0/ema/*.ema
+  ema_format: est
+  ema_sampling_rate: 500
+  ema_scaling_factor: 100
+  ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
+  ema_needs_lowpass: true
+  lab_pathname: /home/engaclew/agent/datasets/fjmw0/lab/*.lab
+  lab_resolution: 1
+  phones_infos: mocha
+
+falh0:
+  wav_pathname: /home/engaclew/agent/datasets/falh0/wav/*.wav
+  ema_pathname: /home/engaclew/agent/datasets/falh0/ema/*.ema
+  ema_format: est
+  ema_sampling_rate: 500
+  ema_scaling_factor: 100
+  ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
+  ema_needs_lowpass: true
+  lab_pathname: /home/engaclew/agent/datasets/falh0/lab/*.lab
+  lab_resolution: 1
+  phones_infos: mocha
+
+mjjn0:
+  wav_pathname: /home/engaclew/agent/datasets/mjjn0/wav/*.wav
+  ema_pathname: /home/engaclew/agent/datasets/mjjn0/ema/*.ema
+  ema_format: est
+  ema_sampling_rate: 500
+  ema_scaling_factor: 100
+  ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
+  ema_needs_lowpass: true
+  lab_pathname: /home/engaclew/agent/datasets/mjjn0/lab/*.lab
+  lab_resolution: 1
+  phones_infos: mocha
+
+ffes0:
+  wav_pathname: /home/engaclew/agent/datasets/ffes0/wav/*.wav
+  ema_pathname: /home/engaclew/agent/datasets/ffes0/ema/*.ema
+  ema_format: est
+  ema_sampling_rate: 500
+  ema_scaling_factor: 100
+  ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
+  ema_needs_lowpass: true
+  lab_pathname: /home/engaclew/agent/datasets/ffes0/lab/*.lab
+  lab_resolution: 1
+  phones_infos: mocha
+
+faet0:
+  wav_pathname: /home/engaclew/agent/datasets/faet0/wav/*.wav
+  ema_pathname: /home/engaclew/agent/datasets/faet0/ema/*.ema
+  ema_format: est
+  ema_sampling_rate: 500
+  ema_scaling_factor: 100
+  ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
+  ema_needs_lowpass: true
+  lab_pathname: /home/engaclew/agent/datasets/faet0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha

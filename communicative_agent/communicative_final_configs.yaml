@@ -1,4 +1,4 @@
-pb2007:
+pb2007-0:
   model:
     direct_model:
       hidden_layers: [512, 512, 512, 512]
@@ -10,6 +10,136 @@ pb2007:
       hidden_size: 64
       dropout_p: 0.17
       bidirectional: true
+    discriminator_model:
+      ff:
+        hidden_layers: [32, 16]
+        activation: relu
+        dropout_p: 0.25
+        batch_norm: true
+  synthesizer:
+    name: ea587b76c95fecef01cfd16c7f5f289d-3
+  sound_quantizer:
+    name: 4be8cc80d3dee54979aded2bf85f175e-3
+  training:
+    inverse_model_learning_rate: 0.0017
+    direct_model_learning_rate: 0.002
+    discriminator_model_learning_rate: 0.002
+    max_epochs: 500
+    patience: 30
+    jerk_loss_weight: 0.05
+    discriminator_loss_weight: 0
+
+pb2007-1:
+  model:
+    direct_model:
+      hidden_layers: [512, 512, 512, 512]
+      activation: relu
+      batch_norm: true
+      dropout_p: 0.13
+    inverse_model:
+      num_layers: 2
+      hidden_size: 64
+      dropout_p: 0.17
+      bidirectional: true
+    discriminator_model:
+      ff:
+        hidden_layers: [32, 16]
+        activation: relu
+        dropout_p: 0.25
+        batch_norm: true
+  synthesizer:
+    name: ea587b76c95fecef01cfd16c7f5f289d-3
+  sound_quantizer:
+    name: a722eccbf1451d4931a277b2c721f64e-0
+  training:
+    inverse_model_learning_rate: 0.0017
+    direct_model_learning_rate: 0.002
+    discriminator_model_learning_rate: 0.002
+    max_epochs: 500
+    patience: 30
+    jerk_loss_weight: 0.05
+    discriminator_loss_weight: 0
+
+pb2007-2:
+  model:
+    direct_model:
+      hidden_layers: [512, 512, 512, 512]
+      activation: relu
+      batch_norm: true
+      dropout_p: 0.13
+    inverse_model:
+      num_layers: 2
+      hidden_size: 64
+      dropout_p: 0.17
+      bidirectional: true
+    discriminator_model:
+      ff:
+        hidden_layers: [32, 16]
+        activation: relu
+        dropout_p: 0.25
+        batch_norm: true
+  synthesizer:
+    name: ea587b76c95fecef01cfd16c7f5f289d-3
+  sound_quantizer:
+    name: ce8f3fdc5d22ccedbd090849107f6994-2
+  training:
+    inverse_model_learning_rate: 0.0017
+    direct_model_learning_rate: 0.002
+    discriminator_model_learning_rate: 0.002
+    max_epochs: 500
+    patience: 30
+    jerk_loss_weight: 0.05
+    discriminator_loss_weight: 0
+
+pb2007-3:
+  model:
+    direct_model:
+      hidden_layers: [512, 512, 512, 512]
+      activation: relu
+      batch_norm: true
+      dropout_p: 0.13
+    inverse_model:
+      num_layers: 2
+      hidden_size: 64
+      dropout_p: 0.17
+      bidirectional: true
+    discriminator_model:
+      ff:
+        hidden_layers: [32, 16]
+        activation: relu
+        dropout_p: 0.25
+        batch_norm: true
+  synthesizer:
+    name: ea587b76c95fecef01cfd16c7f5f289d-3
+  sound_quantizer:
+    name: e1bdb5d1cdf914f94952ada14d69cde5-1
+  training:
+    inverse_model_learning_rate: 0.0017
+    direct_model_learning_rate: 0.002
+    discriminator_model_learning_rate: 0.002
+    max_epochs: 500
+    patience: 30
+    jerk_loss_weight: 0.05
+    discriminator_loss_weight: 0
+
+pb2007-4:
+  model:
+    direct_model:
+      hidden_layers: [512, 512, 512, 512]
+      activation: relu
+      batch_norm: true
+      dropout_p: 0.13
+    inverse_model:
+      num_layers: 2
+      hidden_size: 64
+      dropout_p: 0.17
+      bidirectional: true
+    discriminator_model:
+      ff:
+        hidden_layers: [32, 16]
+        activation: relu
+        dropout_p: 0.25
+        batch_norm: true
   synthesizer:
     name: ea587b76c95fecef01cfd16c7f5f289d-3
   sound_quantizer:
@@ -17,26 +147,28 @@ pb2007:
   training:
     inverse_model_learning_rate: 0.0017
     direct_model_learning_rate: 0.002
+    discriminator_model_learning_rate: 0.002
     max_epochs: 500
-    patience: 25
-    jerk_loss_weight: 0
+    patience: 30
+    jerk_loss_weight: 0.05
+    discriminator_loss_weight: 0
 
-pb2007-synth_as_direct:
-  model:
-    use_synth_as_direct_model: true
-    inverse_model:
-      num_layers: 2
-      hidden_size: 64
-      dropout_p: 0.25
-      bidirectional: true
-  synthesizer:
-    name: ea587b76c95fecef01cfd16c7f5f289d-3
-  sound_quantizer:
-    name: f50650bb40e1346ed24011c2e41b7153-4
-  training:
-    inverse_model_learning_rate: 0.0011
-    direct_model_learning_rate: 0.001
-    max_epochs: 500
-    patience: 25
-    jerk_loss_weight: 0
+#pb2007-synth_as_direct:
+#  model:
+#    use_synth_as_direct_model: true
+#    inverse_model:
+#      num_layers: 2
+#      hidden_size: 64
+#      dropout_p: 0.25
+#      bidirectional: true
+#  synthesizer:
+#    name: ea587b76c95fecef01cfd16c7f5f289d-3
+#  sound_quantizer:
+#    name: f50650bb40e1346ed24011c2e41b7153-4
+#  training:
+#    inverse_model_learning_rate: 0.0011
+#    direct_model_learning_rate: 0.001
+#    max_epochs: 500
+#    patience: 25
+#    jerk_loss_weight: 0
 

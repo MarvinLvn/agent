@@ -47,12 +47,12 @@ def get_dataloaders(dataset_config, sound_scaler, datasplits):
     for dataset_name in dataset_config["names"]:
         dataset = Dataset(dataset_name)
         dataset_sound_data = dataset.get_items_data(
-            dataset_config["sound_type"], cut_silences=True
+            dataset_config["sound_type"]
         )
         dataset_items_name = list(dataset_sound_data.keys())
         if dataset_name not in datasplits:
             dataset_datasplits = utils.shuffle_and_split(
-                dataset_items_name, dataset_config["datasplits_size"]
+                dataset_items_name, dataset_config["datasplits_size"], dataset_config['datasplit_seed']
             )
             datasplits[dataset_name] = dataset_datasplits
 
@@ -86,5 +86,7 @@ def get_dataloaders(dataset_config, sound_scaler, datasplits):
             collate_fn=pad_collate,
         )
         dataloaders.append(split_dataloader)
-
+    if dataset_config['names'][0] == 'librispeech_10_mn':
+        print(datasplits)
+        exit()
     return datasplits, dataloaders

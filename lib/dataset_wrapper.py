@@ -22,9 +22,14 @@ class Dataset:
         self.features_config = utils.read_yaml_file(
             "%s/features_config.yaml" % INFOS_PATH
         )
-        self.phones_infos = utils.read_yaml_file("%s/phones_infos.yaml" % INFOS_PATH)[
-            self.infos["phones_infos"] if "phones_infos" in self.infos else self.name
-        ]
+
+
+        if 'audio_only' in self.infos and self.infos['audio_only']:
+            self.phones_infos = {}
+        else:
+            self.phones_infos = utils.read_yaml_file("%s/phones_infos.yaml" % INFOS_PATH)[
+                self.infos["phones_infos"] if "phones_infos" in self.infos else self.name
+            ]
 
         if os.path.isfile("%s/art_model.pickle" % self.path):
             with open("%s/art_model.pickle" % self.path, "rb") as f:
@@ -100,7 +105,6 @@ class Dataset:
             )
             if cut_silences is True:
                 modality_data = self.cut_item_silences(item_name, modality_data)
-
             items_modality_data[item_name] = modality_data
 
         return items_modality_data
@@ -124,7 +128,6 @@ class Dataset:
                         axis=1,
                     )
                     items_data[item_name] = combined_item_data
-
         return items_data
 
     def get_items_list(self, items_name=None):
@@ -159,3 +162,24 @@ class Dataset:
     def art_to_ema(self, art_params):
         ema = art_params @ self.art_model["art_to_ema_w"] + self.art_model["ema_mean"]
         return ema
+
+class AudioDataset:
+    def __init__(self, name):
+        self.name = name
+        self.path = "%s/%s" % (DATASETS_PATH, self.name)
+
+    def get_modality_dim(self, modality):
+        if modality == "cepstrum":
+            return 18
+
+    def get_items_name(self, modality):
+        data_pathname = "%s/%s/*.bin" % (self.path, modality)
+        items_path = glob(data_pathname)
+        items_path.sort()
+        items_name = [utils.parse_item_name(item_path) for item_path in items_path]
+        return items_name
+
+    def get_item_wave(self, item_name):
+        wav_path = "%s/wav/%s.wav" % (self.path, item_name)
+        sampling_rate, wave = wavfile.read(wav_path)
+        return wave
