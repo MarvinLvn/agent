@@ -24,6 +24,7 @@ class Trainer:
         synthesizer,
         sound_scalers,
         checkpoint_path,
+        inverse_clip_value,
         nb_frames_discriminator=1,
         device="cuda",
         train_babloader=None,
@@ -44,10 +45,10 @@ class Trainer:
         self.synthesizer = synthesizer
         self.train_artloader, self.validation_artloader, self.test_artloader = None, None, None
         if self.nn.discriminator_model is not None:
-            # Need to absolutely check what happens when True
             self.train_artloader, self.validation_artloader, self.test_artloader = synthesizer.get_dataloaders(fit=True, transform=True)
         self.sound_scalers = sound_scalers
         self.checkpoint_path = checkpoint_path
+        self.inverse_clip_value = inverse_clip_value
         self.nb_frame_discriminators = nb_frames_discriminator
         self.device = device
 
@@ -66,18 +67,16 @@ class Trainer:
         for epoch in range(1, self.max_epochs + 1):
             print("== Epoch %s ==" % epoch)
 
-            train_metrics = epoch_fn(self.train_dataloader, self.train_babloader, self.train_artloader, is_training=True)
+            train_metrics = epoch_fn(self.train_dataloader, self.train_babloader, self.train_artloader, training_record, regime='train')
             training_record.save_epoch_metrics("train", train_metrics)
 
-            validation_metrics = epoch_fn(self.validation_dataloader, self.validation_babloader, self.validation_artloader, is_training=False)
+            validation_metrics = epoch_fn(self.validation_dataloader, self.validation_babloader, self.validation_artloader, training_record, regime='val')
             training_record.save_epoch_metrics("validation", validation_metrics)
-
             if self.test_dataloader is not None:
-                test_metrics = epoch_fn(self.test_dataloader, self.test_babloader, self.test_artloader, is_training=False)
+                test_metrics = epoch_fn(self.test_dataloader, self.test_babloader, self.test_artloader, training_record, regime='test')
                 training_record.save_epoch_metrics("test", test_metrics)
 
             early_stopping(validation_metrics.metrics[early_stopping_metric], self.nn)
-
             if early_stopping.early_stop:
                 print("Early stopping")
                 break
@@ -86,7 +85,9 @@ class Trainer:
 
         self.nn.load_state_dict(torch.load(self.checkpoint_path))
 
-    def epoch_inverse_model(self, dataloader, bab_loader, art_loader, is_training):
+    def epoch_inverse_model(self, dataloader, bab_loader, art_loader, training_record, regime):
+        assert regime in ['train', 'val', 'test']
+        is_training = regime == 'train'
         nb_batch = len(dataloader)
         epoch_record = EpochMetrics(nb_batch)
 
@@ -108,7 +109,7 @@ class Trainer:
                     seqs_len,
                     seqs_mask,
                     epoch_record,
-                    is_training=is_training,
+                    regime=regime,
                 )
 
                 self.step_inverse_model(
@@ -116,9 +117,8 @@ class Trainer:
                     seqs_len,
                     seqs_mask,
                     epoch_record,
-                    is_training=is_training,
+                    regime=regime,
                 )
-
                 if bab_loader is not None:
                     try:
                         bab_art_seqs, bab_sound_seqs, bab_seqs_len, bab_seqs_mask = next(bab_loader_iter)
@@ -128,7 +128,7 @@ class Trainer:
                         bab_art_seqs, bab_sound_seqs, bab_seqs_len, bab_seqs_mask = next(bab_loader_iter)
                         bab_art_seqs, bab_sound_seqs, bab_seqs_mask = bab_art_seqs.to(self.device), bab_sound_seqs.to(self.device), bab_seqs_mask.to(self.device)
                     self.step_babbling(bab_sound_seqs, bab_art_seqs, bab_seqs_len, bab_seqs_mask,
-                                       epoch_record=epoch_record, is_training=is_training)
+                                       epoch_record=epoch_record, regime=regime)
 
                 if self.nn.discriminator_model is not None and art_loader is not None:
                     try:
@@ -148,12 +148,36 @@ class Trainer:
                                             art_seqs_len,
                                             art_seqs_mask,
                                             epoch_record=epoch_record,
-                                            is_training=is_training)
+                                            regime=regime)
+
+                    direct_gradient_norm = Trainer.__get_gradient_norm(self.nn.direct_model)
+                    inverse_gradient_norm = Trainer.__get_gradient_norm(self.nn.inverse_model)
+                    discriminator_gradient_norm = Trainer.__get_gradient_norm(self.nn.discriminator_model)
+                    epoch_record.add("direct_gradient_norm", direct_gradient_norm.item())
+                    epoch_record.add("inverse_gradient_norm", inverse_gradient_norm.item())
+                    epoch_record.add("discriminator_gradient_norm", discriminator_gradient_norm.item())
+                    # print(self.nn.direct_model._modules['nn'][-1].weight.shape)
+                    # print(self.nn.direct_model._modules['nn'][-1].weight.grad.shape)
+                    # print(self.nn.inverse_model._parameters)
+                    training_record.save_epoch_metrics(f'{regime}_step', epoch_record, print=False)
         return epoch_record
 
+    @staticmethod
+    def __get_gradient_norm(model):
+        parameters = model.parameters()
+        norm_type = 2
+        # Compute the magnitude of the gradient (L2-norm)
+        grad_norm = torch.norm(
+            torch.stack([
+                torch.norm(p.grad.detach(), norm_type) for p in parameters
+            ]), norm_type)
+        return grad_norm
+
     def step_direct_model(
-        self, sound_seqs, seqs_len, seqs_mask, epoch_record, is_training
+        self, sound_seqs, seqs_len, seqs_mask, epoch_record, regime
     ):
+        assert regime in ['train', 'val', 'test']
+        is_training = regime == 'train'
         if is_training:
             self.nn.inverse_model.eval()
             self.nn.direct_model.train()
@@ -180,8 +204,10 @@ class Trainer:
         epoch_record.add("direct_model_estimation_error", direct_model_loss.item())
 
     def step_inverse_model(
-        self, sound_seqs, seqs_len, seqs_mask, epoch_record, is_training
+        self, sound_seqs, seqs_len, seqs_mask, epoch_record, regime
     ):
+        assert regime in ['train', 'val', 'test']
+        is_training = regime == 'train'
         # Inverse model training/evaluation
         # (inverse model estimation → direct model estimation vs. perceived sound)
         if is_training:
@@ -204,6 +230,8 @@ class Trainer:
 
         if is_training:
             inverse_total.backward()
+            torch.nn.utils.clip_grad_norm_(self.nn.inverse_model.parameters(),
+                                           self.inverse_clip_value)
             self.optimizers["inverse_model"].step()
 
         epoch_record.add(
@@ -224,7 +252,9 @@ class Trainer:
 
     def step_discriminator(self, sound_seqs, seqs_len, seqs_mask,
                            art_seqs, art_seqs_len, art_seqs_mask,
-                           epoch_record, is_training):
+                           epoch_record, regime):
+        assert regime in ['train', 'val', 'test']
+        is_training = regime == 'train'
         if is_training:
             self.nn.discriminator_model.zero_grad()
 
@@ -268,7 +298,9 @@ class Trainer:
         epoch_record.add("discrimination_fake_accuracy", fake_accuracy.item())
         epoch_record.add("discrimination_real_accuracy", real_accuracy.item())
 
-    def step_babbling(self, sound_seqs, art_seqs, seqs_len, seqs_mask, epoch_record, is_training):
+    def step_babbling(self, sound_seqs, art_seqs, seqs_len, seqs_mask, epoch_record, regime):
+        assert regime in ['train', 'val', 'test']
+        is_training = regime == 'train'
         if is_training:
             self.nn.inverse_model.train()
             self.nn.direct_model.eval()

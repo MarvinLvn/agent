@@ -6,7 +6,7 @@ from synthesizer import Synthesizer
 from trainer import Trainer
 
 NB_TRAINING = 5
-DATASETS_NAME = ["pb2007"]
+DATASETS_NAME = ["pb2009"]
 
 
 def main():

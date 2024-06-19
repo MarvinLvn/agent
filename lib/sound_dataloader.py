@@ -39,7 +39,7 @@ class SoundDataset(torch.utils.data.Dataset):
         return self.len
 
 
-def get_dataloaders(dataset_config, sound_scaler, datasplits):
+def get_dataloaders(dataset_config, sound_scaler, datasplits, splice=None):
     datasets_sound_data = {}
     if datasplits is None:
         datasplits = {}
@@ -78,15 +78,19 @@ def get_dataloaders(dataset_config, sound_scaler, datasplits):
             for split_sound_seq in split_sound_seqs
         ]
 
-        split_dataloader = torch.utils.data.DataLoader(
-            SoundDataset(split_sound_seqs),
-            batch_size=dataset_config["batch_size"],
-            shuffle=dataset_config["shuffle_between_epochs"],
-            num_workers=dataset_config["num_workers"],
-            collate_fn=pad_collate,
-        )
+        if splice is not None:
+            split_sound_seqs = [sub_seg for seg in split_sound_seqs for sub_seg in torch.split(seg, seg.shape[0]//splice, dim=0)]
+
+        if len(split_sound_seqs) != 0:
+            split_dataloader = torch.utils.data.DataLoader(
+                SoundDataset(split_sound_seqs),
+                batch_size=dataset_config["batch_size"],
+                shuffle=dataset_config["shuffle_between_epochs"],
+                num_workers=dataset_config["num_workers"],
+                collate_fn=pad_collate,
+            )
+        else:
+            split_dataloader = None
         dataloaders.append(split_dataloader)
-    if dataset_config['names'][0] == 'librispeech_10_mn':
-        print(datasplits)
-        exit()
+
     return datasplits, dataloaders

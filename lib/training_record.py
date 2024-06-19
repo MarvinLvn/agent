@@ -2,15 +2,15 @@ class TrainingRecord:
     def __init__(self):
         self.record = {}
 
-    def save_epoch_metrics(self, epoch_step, epoch_metrics):
+    def save_epoch_metrics(self, epoch_step, epoch_metrics, print=True):
         if epoch_step not in self.record:
             self.record[epoch_step] = {}
         for metric_name, metric_value in epoch_metrics.metrics.items():
             if metric_name not in self.record[epoch_step]:
                 self.record[epoch_step][metric_name] = []
             self.record[epoch_step][metric_name].append(metric_value)
-
-        self.log_metrics(epoch_step, epoch_metrics)
+        if print:
+            self.log_metrics(epoch_step, epoch_metrics)
 
     def log_metrics(self, epoch_step, epoch_metrics):
         print(epoch_step)

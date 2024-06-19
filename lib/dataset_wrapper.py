@@ -11,7 +11,6 @@ SILENCE_NAMES = ["__", "sil"]
 INFOS_PATH = os.path.join(os.path.dirname(__file__), "..")
 DATASETS_PATH = os.path.join(os.path.dirname(__file__), "../datasets")
 
-
 class Dataset:
     def __init__(self, name):
         self.name = name

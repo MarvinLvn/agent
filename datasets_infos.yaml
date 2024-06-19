@@ -9,20 +9,39 @@ pb2007:
   lab_pathname: ./external/raw_datasets/pb2007/_lab/*.lab
   lab_resolution: 10000000
 
+pb2009:
+  wav_pathname: ./external/raw_datasets/pb2009/_wav/*.wav
+  ema_pathname: ./external/raw_datasets/pb2009/_seq/*.seq
+  ema_format: seq
+  ema_sampling_rate: 100
+  ema_scaling_factor: 0.1
+  ema_coils_order: [0, 6, 1, 7, 2, 8, 3, 9, 5, 11, 4, 10]
+  ema_needs_lowpass: false
+  lab_pathname: ./external/raw_datasets/pb2009/_lab/*.lab
+  lab_resolution: 10000000
+
+heldout:
+  wav_pathname: /home/engaclew/agent/datasets/heldout/*/*.wav
+  audio_only: true
+
+test:
+  wav_pathname: /home/engaclew/agent/datasets/test/*/*.wav
+  audio_only: true
+
 M0_10_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_10_mn/*.wav
+  wav_pathname: /home/engaclew/agent/datasets/M0_10_mn/wav/*.wav
   audio_only: true
 
 M0_60_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_60_mn/*.wav
+  wav_pathname: /home/engaclew/agent/datasets/M0_60_mn/wav/*.wav
   audio_only: true
 
 M0_600_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_600_mn/*.wav
+  wav_pathname: /home/engaclew/agent/datasets/M0_600_mn/wav/*.wav
   audio_only: true
 
 M0_6000_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_6000_mn/*.wav
+  wav_pathname: /home/engaclew/agent/datasets/M0_6000_mn/wav/*.wav
   audio_only: true
 
 2_speakers_6000_mn:

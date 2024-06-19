@@ -4,10 +4,10 @@ model:
   batch_norm: true
   dropout_p: 0.05
 dataset:
-  name: pb2007
+  name: pb2009
   art_type: art_params
   sound_type: cepstrum
-  datasplits_size: [80, 20, 0] # train/validation/test in percentage
+  datasplits_size: [90, 10, 0] # train/validation/test in percentage
   datasplit_seed: null
   batch_size: 8
   num_workers: 6

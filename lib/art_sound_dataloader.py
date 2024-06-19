@@ -92,7 +92,6 @@ def get_dataloaders(dataset_config, art_scaler, sound_scaler, datasplits, fit=Tr
                 for split_sound_seq in split_sound_seqs
             ]
 
-
         split_dataloader = torch.utils.data.DataLoader(
             ArtSoundDataset(split_art_seqs, split_sound_seqs),
             batch_size=dataset_config["batch_size"],

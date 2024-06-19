@@ -24,6 +24,11 @@ class ImitativeAgent(BaseAgent):
         self.sound_scaler = StandardScaler()
         self.datasplits = None
         self.bab_datasplits = None
+        self.splice = None
+        if 'splice' in self.config['dataset']:
+            self.splice = self.config['dataset']['splice']
+            print(f"Slicing original segments into {self.splice} subsegments.")
+
         if load_nn:
             self.synthesizer = Synthesizer.reload(
                 "%s/%s" % (SYNTHESIZERS_PATH, config["synthesizer"]["name"])
@@ -86,7 +91,7 @@ class ImitativeAgent(BaseAgent):
 
     def get_dataloaders(self):
         datasplits, dataloaders = get_sound_loaders(
-            self.config["dataset"], self.sound_scaler, self.datasplits
+            self.config["dataset"], self.sound_scaler, self.datasplits, splice=self.splice
         )
         self.datasplits = datasplits
         return dataloaders

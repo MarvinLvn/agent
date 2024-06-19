@@ -124,8 +124,8 @@ def preprocess_ema(
 
         # reordering, target coils order:
         #   lower incisor, tongue tip, tongue middle, tongue back, lower lip, upper lip and velum
-        item_ema = item_ema[:, ema_coils_order]
 
+        item_ema = item_ema[:, ema_coils_order]
         # scaling to mm
         item_ema = item_ema / ema_scaling_factor
 
@@ -179,7 +179,7 @@ def main():
     datasets_wav_rms = {}
 
     for dataset_name, dataset_infos in datasets_infos.items():
-        if dataset_name == 'pb2007' or dataset_name.startswith('librispeech'):
+        if dataset_name == 'pb2009':
 
             print("Preprocessing %s..." % dataset_name)
 
@@ -213,7 +213,6 @@ def main():
 
             print("Extracting cepstrograms and source parameters...")
             extract_cepstrum_and_source(dataset_name)
-            continue
             print("Extracting cepstrograms and source parameters done")
 
             if "ema_pathname" in dataset_infos:
@@ -235,8 +234,8 @@ def main():
                 print("Extracting articulatory model and parameters...")
                 extract_art_parameters(dataset_name, items_ema)
                 print("Extracting articulatory model and parameters done")
-
             if "lab_pathname" in dataset_infos:
+                print("ok")
                 print("Resampling LAB files...")
                 preprocess_lab(
                     dataset_name,
