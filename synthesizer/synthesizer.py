@@ -4,7 +4,7 @@ import yaml
 from sklearn.preprocessing import StandardScaler
 
 from lib import utils
-from lib.art_sound_dataloader import get_dataloaders
+from lib.art_sound_source_dataloader import get_dataloaders
 from lib.dataset_wrapper import Dataset
 from lib.nn.feedforward import FeedForward
 
@@ -25,12 +25,15 @@ class Synthesizer:
         self.art_dim = (
             self.dataset.get_modality_dim(self.config["dataset"]["art_type"])
         )
+        self.source_dim = (
+            self.dataset.get_modality_dim(self.config["dataset"]["source_type"])
+        )
         self.sound_dim = self.dataset.get_modality_dim(
             self.config["dataset"]["sound_type"]
         )
 
         self.nn = FeedForward(
-            self.art_dim,
+            self.art_dim+self.source_dim,
             self.sound_dim,
             model_config["hidden_layers"],
             model_config["activation"],
@@ -38,9 +41,11 @@ class Synthesizer:
             model_config["batch_norm"],
         ).to("cuda")
 
-    def get_dataloaders(self, fit=True, transform=True):
+    def get_dataloaders(self, fit=True, transform=True, cut_silences=True):
         datasplits, dataloaders = get_dataloaders(
-            self.config["dataset"], self.art_scaler, self.sound_scaler, self.datasplits, fit, transform
+            self.config["dataset"], self.art_scaler, self.sound_scaler,
+            self.datasplits, cut_silences=cut_silences, fit=fit, transform=transform,
+            format=self.config['dataset']['format']
         )
         self.datasplits = datasplits
         return dataloaders
@@ -91,13 +96,16 @@ class Synthesizer:
 
         return synthesizer
 
-    def synthesize(self, art_seq, device="cuda"):
-        nn_input = torch.FloatTensor(self.art_scaler.transform(art_seq)).to(device)
+    def synthesize(self, art_seq, source_seq, device="cuda"):
+        art_seq = torch.FloatTensor(self.art_scaler.transform(art_seq))
+        source_seq = torch.FloatTensor(source_seq)
+        nn_input = torch.cat((art_seq, source_seq), dim=1).to(device)
         with torch.no_grad():
             nn_output = self.nn(nn_input).cpu().numpy()
         sound_seq_pred = self.sound_scaler.inverse_transform(nn_output)
         return sound_seq_pred
 
-    def synthesize_cuda(self, art_seqs):
+    def synthesize_cuda(self, art_seqs, source_seqs):
         with torch.no_grad():
-            return self.nn(art_seqs)
+            nn_input = torch.cat((art_seqs, source_seqs), dim=2)
+            return self.nn(nn_input)

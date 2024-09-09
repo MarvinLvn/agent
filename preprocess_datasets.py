@@ -75,6 +75,8 @@ def extract_cepstrum_and_source(dataset_name):
 
         sr, pcm = wavfile.read(wavfile_path)
         assert sr == 16000
+        # if ValueError: buffer source array is read-only
+        # pcm = np.copy(pcm)
         item_lpcnet_features = lpcynet.analyze_frames(pcm)
 
         item_cepstrum = item_lpcnet_features[:, :18]
@@ -196,19 +198,19 @@ def main():
             print("Computing RMS done")
 
             print("Resampling WAV files...")
-            target_wav_rms = (
-                datasets_wav_rms[dataset_infos["wav_rms_reference"]]
-                if "wav_rms_reference" in dataset_infos
-                else None
-            )
-
-            preprocess_wav(
-                dataset_name,
-                dataset_infos["wav_pathname"],
-                features_config["wav_sampling_rate"],
-                dataset_wav_rms,
-                target_wav_rms,
-            )
+            # target_wav_rms = (
+            #     datasets_wav_rms[dataset_infos["wav_rms_reference"]]
+            #     if "wav_rms_reference" in dataset_infos
+            #     else None
+            # )
+            #
+            # preprocess_wav(
+            #     dataset_name,
+            #     dataset_infos["wav_pathname"],
+            #     features_config["wav_sampling_rate"],
+            #     dataset_wav_rms,
+            #     target_wav_rms,
+            # )
             print("Resampling WAV files done")
 
             print("Extracting cepstrograms and source parameters...")
@@ -235,7 +237,6 @@ def main():
                 extract_art_parameters(dataset_name, items_ema)
                 print("Extracting articulatory model and parameters done")
             if "lab_pathname" in dataset_infos:
-                print("ok")
                 print("Resampling LAB files...")
                 preprocess_lab(
                     dataset_name,

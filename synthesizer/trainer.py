@@ -66,13 +66,13 @@ class Trainer:
 
         self.nn.train()
         for batch in tqdm(dataloader, total=nb_batch, leave=False):
-            art_seqs, sound_seqs, seqs_len, seqs_mask = batch
-            art_seqs = art_seqs.to("cuda")
+            art_seqs, sound_seqs, source_seqs, seqs_len, seqs_mask = batch
             sound_seqs = sound_seqs.to("cuda")
             seqs_mask = seqs_mask.to("cuda")
+            art_source_seqs = torch.cat((art_seqs, source_seqs), dim=2).to("cuda")
 
             self.optimizer.zero_grad()
-            sound_seqs_pred = self.nn(art_seqs)
+            sound_seqs_pred = self.nn(art_source_seqs)
             reconstruction_loss = self.loss_fn(sound_seqs_pred, sound_seqs, seqs_mask)
             reconstruction_loss.backward()
             self.optimizer.step()
@@ -88,12 +88,12 @@ class Trainer:
         self.nn.eval()
         with torch.no_grad():
             for batch in tqdm(dataloader, total=nb_batch, leave=False):
-                art_seqs, sound_seqs, seqs_len, seqs_mask = batch
-                art_seqs = art_seqs.to("cuda")
+                art_seqs, sound_seqs, source_seqs, seqs_len, seqs_mask = batch
                 sound_seqs = sound_seqs.to("cuda")
                 seqs_mask = seqs_mask.to("cuda")
+                art_source_seqs = torch.cat((art_seqs, source_seqs), dim=2).to("cuda")
 
-                sound_seqs_pred = self.nn(art_seqs)
+                sound_seqs_pred = self.nn(art_source_seqs)
                 reconstruction_loss = self.loss_fn(
                     sound_seqs_pred, sound_seqs, seqs_mask
                 )

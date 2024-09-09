@@ -5,7 +5,7 @@ from lib import utils
 from synthesizer import Synthesizer
 from trainer import Trainer
 
-NB_TRAINING = 5
+NB_TRAINING = 1
 DATASETS_NAME = ["pb2009"]
 
 

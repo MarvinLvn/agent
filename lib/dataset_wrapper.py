@@ -85,37 +85,50 @@ class Dataset:
             return len(self.infos["ema_coils_order"]) // 2
         elif modality.startswith("agent_art_"):
             return len(self.infos["ema_coils_order"]) // 2
+        elif modality in ['mel', 'mel_10ms', 'mel_20ms']:
+            return 80
+        else:
+            raise ValueError(f'Cannot find dimensionality for modality = {modality}')
 
-    def get_items_name(self, modality):
-        data_pathname = "%s/%s/*.bin" % (self.path, modality)
+    def get_items_name(self, modality, format):
+        data_pathname = "%s/%s/*%s" % (self.path, modality, format)
         items_path = glob(data_pathname)
         items_path.sort()
         items_name = [utils.parse_item_name(item_path) for item_path in items_path]
         return items_name
 
-    def get_items_modality_data(self, modality, cut_silences=False):
-        items_name = self.get_items_name(modality)
+    def get_items_modality_data(self, modality, cut_silences=False, format='.bin'):
+        items_name = self.get_items_name(modality, format=format)
         items_modality_data = {}
         modality_dim = self.get_modality_dim(modality)
+        transpose = False
+        if modality in ["mel", "mel_10ms", "mel_20ms"]:
+            print("Transposing mel features to get [T,N] vectors.")
+            transpose = True
+
         for item_name in items_name:
-            item_path = "%s/%s/%s.bin" % (self.path, modality, item_name)
-            modality_data = np.fromfile(item_path, dtype="float32").reshape(
-                (-1, modality_dim)
-            )
+            item_path = "%s/%s/%s%s" % (self.path, modality, item_name, format)
+
+            if format == '.bin':
+                modality_data = np.fromfile(item_path, dtype="float32").reshape((-1, modality_dim))
+            elif format == '.npy':
+                modality_data = np.float32(np.load(item_path))
+                if transpose:
+                    modality_data = modality_data.T
+
+            modality_data = modality_data
             if cut_silences is True:
                 modality_data = self.cut_item_silences(item_name, modality_data)
             items_modality_data[item_name] = modality_data
 
         return items_modality_data
 
-    def get_items_data(self, modalities, cut_silences=False):
+    def get_items_data(self, modalities, cut_silences=False, format='.bin'):
         if type(modalities) is not list:
             modalities = [modalities]
-
         items_data = None
         for modality in modalities:
-            items_modality_data = self.get_items_modality_data(modality, cut_silences)
-
+            items_modality_data = self.get_items_modality_data(modality, cut_silences, format)
             if items_data is None:
                 items_data = items_modality_data
             else:
@@ -127,6 +140,9 @@ class Dataset:
                         axis=1,
                     )
                     items_data[item_name] = combined_item_data
+
+        if len(items_data) == 0:
+            raise ValueError(f"Couldn't find data for modality {modalities}")
         return items_data
 
     def get_items_list(self, items_name=None):
