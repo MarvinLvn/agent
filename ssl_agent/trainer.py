@@ -45,7 +45,7 @@ class Trainer:
     def train(self):
         training_record = TrainingRecord()
         self.train_model_part(
-            training_record, self.epoch_inverse_model, "inverse_model_repetition_error"
+            training_record, self.epoch_inverse_model, "inverse_loss"
         )
         return training_record.record
 
