@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import torch
-from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2Model
+from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2ForPreTraining
 
 # Need to:
 # pip install transformers
@@ -24,7 +24,7 @@ EXTRACTORS_PATH = Path(__file__).parent.resolve() / "../out/feature_extractor"
 class Wav2Vec2Extractor:
     def __init__(self, model_name, num_layers, sampling_rate):
 
-        self.model = self._load_model(Wav2Vec2Model, model_name)
+        self.model = self._load_model(Wav2Vec2ForPreTraining, model_name)
         self.model.eval()
         self.feature_extractor = self._load_feature_extractor(Wav2Vec2FeatureExtractor, model_name)
         #Wav2Vec2FeatureExtractor.from_pretrained(model_name)
@@ -66,19 +66,37 @@ class Wav2Vec2Extractor:
     def extract_features(self, wav_seqs, lengths=None):
         inputs = self.feature_extractor(wav_seqs, sampling_rate=self.sampling_rate, return_tensors='pt')
         inputs = inputs['input_values'].squeeze(0).to(self.model.device)
+
         outputs = self.model(inputs)
         features = outputs.hidden_states[self.num_layers]
 
         adjusted_lengths, seqs_mask = None, None
         if lengths is not None:
             # Mask features that are out of boundaries
-            length_ratio = features.shape[1] / inputs.shape[1]
-            adjusted_lengths = torch.ceil(lengths.float() * length_ratio).long().to('cpu')
+            adjusted_lengths = self.get_output_lengths(lengths).to('cpu')
             seqs_mask = torch.arange(features.shape[1])[None, :] < adjusted_lengths[:, None]
             seqs_mask = seqs_mask.to(self.model.device)
             features = features * seqs_mask.unsqueeze(-1)
 
         return features, adjusted_lengths, seqs_mask
+
+    def get_output_lengths(self, input_lengths, add_adapter=None):
+        # Adapted from https://github.com/huggingface/transformers/blob/main/src/transformers/models/wav2vec2/modeling_wav2vec2.py
+        add_adapter = self.model.config.add_adapter if add_adapter is None else add_adapter
+
+        def _conv_out_length(input_length, kernel_size, stride):
+            # 1D convolutional layer output length formula taken
+            # from https://pytorch.org/docs/stable/generated/torch.nn.Conv1d.html
+            return torch.floor_divide(input_length - kernel_size, stride) + 1
+
+        for kernel_size, stride in zip(self.model.config.conv_kernel, self.model.config.conv_stride):
+            input_lengths = _conv_out_length(input_lengths, kernel_size, stride)
+
+        if add_adapter:
+            for _ in range(self.model.config.num_adapter_layers):
+                input_lengths = _conv_out_length(input_lengths, 1, self.model.adapter_stride)
+
+        return input_lengths
 
 
 
