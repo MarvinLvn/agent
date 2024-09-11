@@ -49,7 +49,7 @@ def main():
                 patience=agent_config["training"]["patience"],
                 checkpoint_path="./out/checkpoint.pt",
                 nb_frames_discriminator=nb_frames_discriminator,
-                device='cpu',
+                device='cuda',
             )
             start_time = time.time()
             metrics_record = trainer.train()
