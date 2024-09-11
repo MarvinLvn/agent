@@ -14,10 +14,11 @@ from ssl_agent_nn import SSLAgentNN
 from synthesizer.synthesizer import Synthesizer
 from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
 from vocoder.hifigan_vocoder import HifiGAN
+from pathlib import Path
 
-VOCODERS_PATH = os.path.join(os.path.dirname(__file__), "../out/vocoder")
-SYNTHESIZERS_PATH = os.path.join(os.path.dirname(__file__), "../out/synthesizer")
-EXTRACTORS_PATH = os.path.join(os.path.dirname(__file__), "../out/feature_extractor")
+VOCODERS_PATH = Path(__file__).parent.resolve() / "../out/vocoder"
+SYNTHESIZERS_PATH = Path(__file__).parent.resolve() / "../out/synthesizer"
+EXTRACTORS_PATH = Path(__file__).parent.resolve() / "../out/feature_extractor"
 
 
 class SSLAgent(BaseAgent):

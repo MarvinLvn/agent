@@ -1,4 +1,3 @@
-pb2009:
   model:
     inverse_model:
       num_layers: 2
@@ -23,7 +22,7 @@ pb2009:
     num_workers: 6
     shuffle_between_epochs: true
     cut_silences: true
-    max_len: 32000
+    max_len: 38400
   training:
     learning_rate: 0.0017
     discriminator_model_learning_rate: 0.002

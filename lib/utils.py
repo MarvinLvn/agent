@@ -7,11 +7,16 @@ import hashlib
 from scipy import signal
 import pickle
 import os.path
+from pathlib import Path
 
 RE_ITEM_NAME = re.compile(r"([\w-]+)\.[\w]+$")
 RE_SPACES = re.compile(r"\s+")
 RE_LAB_LINE = re.compile(r"^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(.+)\n$")
 
+VOCODERS_PATH = Path(__file__).parent.resolve() / "../out/vocoder"
+SYNTHESIZERS_PATH = Path(__file__).parent.resolve() / "../out/synthesizer"
+EXTRACTORS_PATH = Path(__file__).parent.resolve() / "../out/feature_extractor"
+DATA_PATH = Path(__file__).parent.resolve() / "../datasets"
 
 def mkdir(path):
     pathlib.Path(path).mkdir(parents=True, exist_ok=True)
@@ -161,3 +166,69 @@ def get_variable_signature(var):
         signature = f"{var}"
 
     return hashlib.md5(signature.encode()).hexdigest()
+
+def check_config(config):
+    mandatories = ['synthesizer', 'vocoder', 'feature_extractor', 'dataset']
+    for mand in mandatories:
+        if config[mand]['name'] is None:
+            raise ValueError(f'Please provide {mand}')
+
+    if not (SYNTHESIZERS_PATH / config['synthesizer']['name']).is_dir():
+        raise ValueError(f"Cannot find {SYNTHESIZERS_PATH / config['synthesizer']['name']}")
+    if not (VOCODERS_PATH / config['vocoder']['name']).is_file():
+        raise ValueError(f"Cannot find {VOCODERS_PATH / config['vocoder']['name']}")
+    if not (DATA_PATH / config['dataset']['name']).is_dir():
+        raise ValueError(f"Cannot find {DATA_PATH / config['dataset']['name']}")
+    if not (DATA_PATH / config['dataset']['name'] / config['dataset']['sound_type']).is_dir():
+        raise ValueError(f"Cannot find {DATA_PATH / config['dataset']['name'] / config['dataset']['sound_type']}")
+    if not (DATA_PATH / config['dataset']['name'] / config['dataset']['source_type']).is_dir():
+        raise ValueError(f"Cannot find {DATA_PATH / config['dataset']['name'] / config['dataset']['source_type']}")
+
+    if 'discriminator_model' in config and 'ff' in config['discriminator_model'] and config['discriminator_model']['nb_frames'] != 1:
+        raise ValueError("nb_frames_discriminator should be set to 1 with a feed-forward discriminator")
+
+def create_config(args):
+    if args.datasplit_seed is None:
+        args.datasplit_seed = random.randint(0, 1000)
+    out = {
+        'model': {
+            'inverse_model': {
+                'num_layers': args.num_layers,
+                'hidden_size': args.hidden_size,
+                'dropout_p': args.dropout_p,
+                'bidirectional': args.bidirectional,
+            },
+        },
+        'synthesizer': {
+            'name': args.synthesizer
+        },
+        'vocoder': {
+            'name': args.vocoder
+        },
+        'feature_extractor': {
+            'name': args.extractor,
+            'layer': args.extractor_layer,
+            'sampling_rate': args.sampling_rate,
+        },
+        'dataset': {
+            'name': args.data_name,
+            'sound_type': args.sound_type,
+            'source_type': args.source_type,
+            'datasplits_size': [args.train_prop, args.val_prop, 1-args.train_prop-args.val_prop],
+            'datasplit_seed': args.datasplit_seed,
+            'batch_size': args.batch_size,
+            'num_workers': args.num_workers,
+            'shuffle_between_epochs': args.shuffle_between_epochs,
+            'cut_silences': args.cut_silences,
+            'max_len': args.max_len,
+        },
+        'training': {
+            'learning_rate': args.learning_rate,
+            'discriminator_learning_rate': args.discriminator_learning_rate,
+            'max_epochs': args.max_epochs,
+            'patience': args.patience,
+            'jerk_loss_weight': args.jerk_loss_weight,
+            'discriminator_loss_weight': args.discriminator_loss_weight,
+        }
+    }
+    return out
