@@ -91,7 +91,7 @@ class Trainer:
                 wav_seqs, wav_seqs_len, _, source_seqs, _, _ = batch
                 wav_seqs = wav_seqs.to(self.device)
                 source_seqs = source_seqs.to(self.device)
-
+                print("wav", wav_seqs.shape)
                 # 1) Extract features from the received stimuli
                 with torch.no_grad():
                     feat_seqs, feat_seqs_len, feat_seqs_mask = self.nn.feature_extractor.extract_features(wav_seqs, wav_seqs_len)
@@ -145,6 +145,8 @@ class Trainer:
             self.optimizers["inverse_model"].zero_grad()
 
         # 1. Inverse features into articulatory space
+        print("feat_seqs", feat_seqs.shape)
+        print("feat_seqs_len", feat_seqs_len)
         art_seqs_estimated = self.nn.inverse_model(feat_seqs, seqs_len=feat_seqs_len)
 
         # 2. Run discriminator if relevant
