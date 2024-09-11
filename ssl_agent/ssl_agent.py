@@ -2,18 +2,16 @@ import torch
 import pickle
 import yaml
 import os
-from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from lib.base_agent import BaseAgent
 from lib.wav_source_dataloader import get_dataloaders as get_sound_source_loaders
 
-from lib.nn.simple_lstm import SimpleLSTM, LSTM_FF
+from lib.nn.simple_lstm import LSTM_FF
 from lib.nn.feedforward import FeedForward
 from lib.nn.loss import compute_jerk_loss
 
 from inverse_model.inverse_model import InverseModel
 from ssl_agent_nn import SSLAgentNN
 from synthesizer.synthesizer import Synthesizer
-from external import lpcynet
 from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
 from vocoder.hifigan_vocoder import HifiGAN
 

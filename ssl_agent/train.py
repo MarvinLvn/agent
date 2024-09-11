@@ -1,10 +1,9 @@
 import os
 import pickle
+import time
 
 from lib import utils
 from ssl_agent import SSLAgent
-import time
-from datetime import timedelta
 from trainer import Trainer
 
 ART_MODALITY = "art_params"

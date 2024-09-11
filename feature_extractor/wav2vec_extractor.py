@@ -1,7 +1,7 @@
-from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2Model
-import torch
 from pathlib import Path
-import torchaudio
+
+import torch
+from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2Model
 
 # Need to:
 # pip install transformers
