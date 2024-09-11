@@ -11,6 +11,6 @@ class SSLAgentNN(nn.Module):
         self.synthesizer = synthesizer
         self.vocoder = vocoder
 
-    def forward(self, sound_seqs): # to change
-        art_seqs_pred = self.inverse_model(sound_seqs)
+    def forward(self, feat_seqs):
+        art_seqs_pred = self.inverse_model(feat_seqs)
         return art_seqs_pred

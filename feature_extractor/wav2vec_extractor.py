@@ -27,7 +27,6 @@ class Wav2Vec2Extractor:
         self.model = self._load_model(Wav2Vec2ForPreTraining, model_name)
         self.model.eval()
         self.feature_extractor = self._load_feature_extractor(Wav2Vec2FeatureExtractor, model_name)
-        #Wav2Vec2FeatureExtractor.from_pretrained(model_name)
 
         self.num_layers = num_layers
         self.sampling_rate = sampling_rate
