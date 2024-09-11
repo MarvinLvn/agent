@@ -1,0 +1,34 @@
+pb2009:
+  model:
+    inverse_model:
+      num_layers: 2
+      hidden_size: 64
+      dropout_p: 0.17
+      bidirectional: true
+  synthesizer:
+    name: mel_synth
+  vocoder:
+    name: cp_hifigan_20_ms/g_00190000
+  feature_extractor:
+    name: facebook/wav2vec2-base-10k-voxpopuli
+    layer: 12
+    sampling_rate: 16000
+  dataset:
+    name: pb2009
+    sound_type: wav
+    source_type: source
+    datasplits_size: [64, 16, 20] # train/validation/test in percentage
+    datasplit_seed: 0
+    batch_size: 8
+    num_workers: 6
+    shuffle_between_epochs: true
+    cut_silences: true
+    max_len: 32000
+  training:
+    learning_rate: 0.0017
+    discriminator_model_learning_rate: 0.002
+    max_epochs: 500
+    patience: 30
+    jerk_loss_weight: 0
+    discriminator_loss_weight: 0
+

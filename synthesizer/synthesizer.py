@@ -27,7 +27,8 @@ class Synthesizer:
         )
         self.source_dim = (
             self.dataset.get_modality_dim(self.config["dataset"]["source_type"])
-        )
+        ) if "source_type" in self.config["dataset"] else 0
+
         self.sound_dim = self.dataset.get_modality_dim(
             self.config["dataset"]["sound_type"]
         )

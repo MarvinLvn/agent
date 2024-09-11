@@ -4,7 +4,7 @@ from glob import glob
 import os
 from scipy.io import wavfile
 import pickle
-
+import torchaudio
 
 SILENCE_NAMES = ["__", "sil"]
 
@@ -87,6 +87,8 @@ class Dataset:
             return len(self.infos["ema_coils_order"]) // 2
         elif modality in ['mel', 'mel_10ms', 'mel_20ms']:
             return 80
+        elif modality == 'wav':
+            return 1
         else:
             raise ValueError(f'Cannot find dimensionality for modality = {modality}')
 
@@ -102,8 +104,8 @@ class Dataset:
         items_modality_data = {}
         modality_dim = self.get_modality_dim(modality)
         transpose = False
-        if modality in ["mel", "mel_10ms", "mel_20ms"]:
-            print("Transposing mel features to get [T,N] vectors.")
+        if modality in ["mel", "mel_10ms", "mel_20ms", "wav"]:
+            print("Transposing features to get [T,N] vectors.")
             transpose = True
 
         for item_name in items_name:
@@ -113,12 +115,15 @@ class Dataset:
                 modality_data = np.fromfile(item_path, dtype="float32").reshape((-1, modality_dim))
             elif format == '.npy':
                 modality_data = np.float32(np.load(item_path))
-                if transpose:
-                    modality_data = modality_data.T
+            elif format == '.wav':
+                modality_data, _ = torchaudio.load(item_path)
+                modality_data = modality_data.squeeze(0)
 
-            modality_data = modality_data
+            if transpose:
+                modality_data = modality_data.T
+
             if cut_silences is True:
-                modality_data = self.cut_item_silences(item_name, modality_data)
+                modality_data = self.cut_item_silences(item_name, modality_data, is_wav=modality=='wav')
             items_modality_data[item_name] = modality_data
 
         return items_modality_data
@@ -157,7 +162,7 @@ class Dataset:
 
         return items_list
 
-    def cut_item_silences(self, item_name, item_data):
+    def cut_item_silences(self, item_name, item_data, is_wav=False):
         item_lab = self.lab[item_name]
         if item_lab[0]["name"] in SILENCE_NAMES:
             start = item_lab[0]["end"]
@@ -167,6 +172,11 @@ class Dataset:
             end = item_lab[-1]["start"]
         else:
             end = item_lab[-1]["end"]
+
+        if is_wav:
+            start *= 160
+            end *= 160
+
         return item_data[start:end]
 
     def get_item_wave(self, item_name):
