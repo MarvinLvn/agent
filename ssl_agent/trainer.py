@@ -29,6 +29,9 @@ class Trainer:
         self.nn.vocoder.generator.to(device)
         if isinstance(self.nn.feature_extractor, Wav2Vec2Extractor):
             self.nn.feature_extractor.model.to(device)
+        else:
+            self.nn.feature_extractor.mfcc_transform.to(device)
+            self.nn.feature_extractor.delta_transform.to(device)
 
         self.optimizers = optimizers
         self.train_dataloader = train_dataloader
@@ -175,6 +178,7 @@ class Trainer:
         min_len = min(feat_seqs.shape[1], feat_seqs_repeated.shape[1])
         feat_seqs = feat_seqs[:, :min_len, :]
         feat_seqs_repeated = feat_seqs_repeated[:, :min_len, :]
+        feat_seqs_mask = feat_seqs_mask[:, :min_len]
 
         inverse_loss = self.losses_fn['mse'](feat_seqs, feat_seqs_repeated, feat_seqs_mask)
 

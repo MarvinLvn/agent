@@ -29,14 +29,20 @@ class MFCCExtractor:
             delta1 = self.delta_transform(features)
             delta2 = self.delta_transform(delta1)
             features = torch.cat([features, delta1, delta2], dim=1)
+
         features = features.transpose(2, 1)
+        mean = features.mean(dim=1, keepdim=True)
+        std = features.std(dim=1, keepdim=True)
+        features = (features - mean) / (std + 1e-8)
+
         adjusted_lengths, seqs_mask = None, None
         if lengths is not None:
             # Mask features that are out of boundaries
             max_len = features.shape[1]
             ratio = lengths[0] / max_len
-            adjusted_lengths = torch.floor(lengths / ratio).long()
-            seqs_mask = torch.arange(max_len, device=features.device)[None, :] < adjusted_lengths[:, None]
+            adjusted_lengths = torch.floor(lengths / ratio).long().to('cpu')
+            seqs_mask = torch.arange(max_len, device='cpu')[None, :] < adjusted_lengths[:, None]
+            seqs_mask = seqs_mask.to(features.device)
             features = features[:, :max_len, :]
             features = features * seqs_mask.unsqueeze(-1)
         return features, adjusted_lengths, seqs_mask

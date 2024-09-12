@@ -159,23 +159,23 @@ class SSLAgent(BaseAgent):
         return {"inverse_model": inverse_model_loss, "mse": mse, "bce": bce, "cosine": cosine_distance}
 
     def save(self, save_path):
-        with open(save_path + "/config.yaml", "w") as f:
+        with open(save_path / "config.yaml", "w") as f:
             yaml.safe_dump(self.config, f)
-        with open(save_path + "/datasplits.pickle", "wb") as f:
+        with open(save_path / "/datasplits.pickle", "wb") as f:
             pickle.dump(self.datasplits, f)
-        torch.save(self.nn.state_dict(), save_path + "/nn_weights.pt")
+        torch.save(self.nn.state_dict(), save_path / "nn_weights.pt")
 
     @staticmethod
     def reload(save_path, load_nn=True):
-        with open(save_path + "/config.yaml", "r") as f:
+        with open(save_path / "config.yaml", "r") as f:
             config = yaml.safe_load(f)
         agent = SSLAgent(config)
 
-        with open(save_path + "/datasplits.pickle", "rb") as f:
+        with open(save_path / "datasplits.pickle", "rb") as f:
             agent.datasplits = pickle.load(f)
 
         if load_nn:
-            agent.nn.load_state_dict(torch.load(save_path + "/nn_weights.pt"))
+            agent.nn.load_state_dict(torch.load(save_path / "nn_weights.pt"))
             agent.nn.eval()
 
         return agent
