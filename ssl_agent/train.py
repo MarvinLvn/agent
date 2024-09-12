@@ -64,6 +64,19 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(description='Trainer')
 
     group_arch = parser.add_argument_group('Architecture')
+    # Mandatory parameters
+    group_arch.add_argument('--synthesizer', type=str,
+                            choices=['mel_synth'],
+                            help='Name of the synthesizer to be used to train the inverse model. '
+                                 'Should lie in agent/out/synthesizer.')
+    group_arch.add_argument('--vocoder', type=str,
+                            choices=['cp_hifigan_20_ms/g_00190000'],
+                            help='Name of the vocoder to be used to train the inverse model. '
+                                 'Should lie in agent/out/vocoder.')
+    group_arch.add_argument('--extractor', type=str,
+                            choices=['mfcc', 'facebook/wav2vec2-base-10k-voxpopuli'],
+                            help='Name of the wav2vec 2.0 model to be used for feature extraction.')
+    # Non mandatory
     group_arch.add_argument('--num_layers', type=int, default=2,
                             help='Number of LSTM layers in the inverse model.')
     group_arch.add_argument('--hidden_size', type=int, default=64,
@@ -77,20 +90,26 @@ def parse_args(argv):
                                  'Only used if --extractor is a wav2vec 2.0 model.')
     group_arch.add_argument('--sampling_rate', type=int, default=16000,
                             choices=[16000],
-                            help='Sampling rate of the audio (used for wav2vec 2.0). '
+                            help='Sampling rate of the audio (used for feature extraction). '
                                  'Only 16000 is supported for now.')
-    # Mandatory parameters
-    group_arch.add_argument('--synthesizer', type=str,
-                            choices=['mel_synth'],
-                            help='Name of the synthesizer to be used to train the inverse model. '
-                                 'Should lie in agent/out/synthesizer.')
-    group_arch.add_argument('--vocoder', type=str,
-                            choices=['cp_hifigan_20_ms/g_00190000'],
-                            help='Name of the vocoder to be used to train the inverse model. '
-                                 'Should lie in agent/out/vocoder.')
-    group_arch.add_argument('--extractor', type=str,
-                            choices=['mfcc', 'facebook/wav2vec2-base-10k-voxpopuli'],
-                            help='Name of the wav2vec 2.0 model to be used for feature extraction.')
+    group_arch.add_argument('--n_mfcc', type=int, default=13,
+                            help='Number of MFCC coefficients to consider. '
+                                 'Only used if --extractor=mfcc. Default to 13.')
+    group_arch.add_argument('--n_fft', type=int, default=640,
+                            help='Number of samples used in the fast fourier transform. '
+                                 'Only used if --extractor=mfcc. Default to 640 (40 ms for a 16-kHz audio).')
+    group_arch.add_argument('--hop_length', type=int, default=320,
+                            help='Number of samples between two windows.'
+                                 'Only used if --extractor=mfcc.'
+                                 'Default to 320 (which will give you 50 frames per second,'
+                                 'with  50% overlap for n_fft=320,sr=16000)')
+    group_arch.add_argument('--n_mels', type=int, default=26,
+                            help='Number of mel filters. '
+                                 'Only used if --extractor=mfcc. Default to 26.')
+    group_arch.add_argument('--add_delta', action='store_true',
+                            help='Whether to add delta and delta2. '
+                                 'Only used if --extractor=mfcc.')
+
 
     group_data = parser.add_argument_group('Dataset')
     group_data.add_argument('--data_name', type=str,

@@ -8,10 +8,18 @@
     name: mel_synth
   vocoder:
     name: cp_hifigan_20_ms/g_00190000
+#  feature_extractor:
+#    name: facebook/wav2vec2-base-10k-voxpopuli
+#    layer: 12
+#    sampling_rate: 16000
   feature_extractor:
-    name: facebook/wav2vec2-base-10k-voxpopuli
-    layer: 12
-    sampling_rate: 16000
+      name: mfcc
+      n_mfcc: 13
+      n_fft: 320
+      hop_length: 160
+      n_mels: 26
+      add_delta: true
+      sampling_rate: 16000
   dataset:
     name: pb2009
     sound_type: wav

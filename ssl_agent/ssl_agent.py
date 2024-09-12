@@ -13,6 +13,7 @@ from inverse_model.inverse_model import InverseModel
 from ssl_agent_nn import SSLAgentNN
 from synthesizer.synthesizer import Synthesizer
 from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
+from feature_extractor.mfcc_extractor import MFCCExtractor
 from vocoder.hifigan_vocoder import HifiGAN
 from pathlib import Path
 
@@ -29,9 +30,17 @@ class SSLAgent(BaseAgent):
         self.cut_silences = self.config['dataset'].get('cut_silences', False)
         self.max_len = self.config['dataset'].get('max_len', None)
         # 1) We load the feature extractor (wav -> feat)
-        self.feature_extractor = Wav2Vec2Extractor(model_name=self.config['feature_extractor']['name'],
-                                                   num_layers=self.config['feature_extractor']['layer'],
+        if self.config['feature_extractor']['name'] == 'mfcc':
+            self.feature_extractor = MFCCExtractor(n_mfcc=self.config['feature_extractor']['n_mfcc'],
+                                                   n_fft=self.config['feature_extractor']['n_fft'],
+                                                   hop_length=self.config['feature_extractor']['hop_length'],
+                                                   n_mels=self.config['feature_extractor']['n_mels'],
+                                                   add_delta=self.config['feature_extractor']['add_delta'],
                                                    sampling_rate=self.config['feature_extractor']['sampling_rate'])
+        else:
+            self.feature_extractor = Wav2Vec2Extractor(model_name=self.config['feature_extractor']['name'],
+                                                       num_layers=self.config['feature_extractor']['layer'],
+                                                       sampling_rate=self.config['feature_extractor']['sampling_rate'])
 
         # 2) We load the synthesizer (art_params -> mel_spectro)
         self.synthesizer = Synthesizer.reload("%s/%s" % (SYNTHESIZERS_PATH, config["synthesizer"]["name"]), load_nn=True)

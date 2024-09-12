@@ -205,11 +205,6 @@ def create_config(args):
         'vocoder': {
             'name': args.vocoder
         },
-        'feature_extractor': {
-            'name': args.extractor,
-            'layer': args.extractor_layer,
-            'sampling_rate': args.sampling_rate,
-        },
         'dataset': {
             'name': args.data_name,
             'sound_type': args.sound_type,
@@ -231,4 +226,21 @@ def create_config(args):
             'discriminator_loss_weight': args.discriminator_loss_weight,
         }
     }
+
+    if args.extractor == 'mfcc':
+        out['feature_extractor'] = {
+            'name': 'mfcc',
+            'n_mfcc': args.n_mfcc,
+            'n_fft': args.n_fft,
+            'hop_length': args.hop_length,
+            'n_mels': args.n_mels,
+            'add_delta': args.add_delta,
+            'sampling_rate': args.sampling_rate,
+        }
+    else:
+        out['feature_extractor'] = {
+            'name': args.extractor,
+            'layer': args.extractor_layer,
+            'sampling_rate': args.sampling_rate,
+        }
     return out

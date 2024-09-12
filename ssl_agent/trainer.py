@@ -2,11 +2,12 @@ from contextlib import nullcontext
 
 import torch
 from tqdm import tqdm
-
+import numpy as np
 from lib.early_stopping import EarlyStopping
 from lib.nn.simple_lstm import LSTM_FF
 from lib.training_record import TrainingRecord, EpochMetrics
-
+from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
+from feature_extractor.mfcc_extractor import MFCCExtractor
 
 class Trainer:
     def __init__(
@@ -24,9 +25,10 @@ class Trainer:
         device="cpu",
     ):
         self.nn = nn.to(device)
-        self.nn.feature_extractor.model.to(device)
         self.nn.synthesizer.nn.to(device)
         self.nn.vocoder.generator.to(device)
+        if isinstance(self.nn.feature_extractor, Wav2Vec2Extractor):
+            self.nn.feature_extractor.model.to(device)
 
         self.optimizers = optimizers
         self.train_dataloader = train_dataloader
@@ -139,7 +141,8 @@ class Trainer:
         if is_training:
             self.nn.inverse_model.train()
             self.nn.inverse_model.requires_grad_(True)
-            self.nn.feature_extractor.model.eval()
+            if isinstance(self.nn.feature_extractor, Wav2Vec2Extractor):
+                self.nn.feature_extractor.model.eval()
             self.nn.synthesizer.nn.eval()
             self.nn.vocoder.generator.eval()
             self.optimizers["inverse_model"].zero_grad()
@@ -169,8 +172,11 @@ class Trainer:
         feat_seqs_repeated, feat_seqs_len, feat_seqs_mask = self.nn.feature_extractor.extract_features(audio_seqs_repeated, wav_seqs_len)
 
         # 6. Compute loss
-        feat_seqs = feat_seqs[:, :feat_seqs_repeated.shape[1], :]
-        inverse_loss = self.losses_fn['cosine'](feat_seqs, feat_seqs_repeated, feat_seqs_mask)
+        min_len = min(feat_seqs.shape[1], feat_seqs_repeated.shape[1])
+        feat_seqs = feat_seqs[:, :min_len, :]
+        feat_seqs_repeated = feat_seqs_repeated[:, :min_len, :]
+
+        inverse_loss = self.losses_fn['mse'](feat_seqs, feat_seqs_repeated, feat_seqs_mask)
 
         if is_training:
             inverse_loss.backward()
