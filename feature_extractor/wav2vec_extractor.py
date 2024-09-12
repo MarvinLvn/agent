@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import torch
+from torch import nn
 from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2ForPreTraining
 
 # Need to:
@@ -21,9 +22,9 @@ from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2ForPreTraining
 EXTRACTORS_PATH = Path(__file__).parent.resolve() / "../out/feature_extractor"
 
 
-class Wav2Vec2Extractor:
+class Wav2Vec2Extractor(nn.Module):
     def __init__(self, model_name, num_layers, sampling_rate):
-
+        super().__init__()
         self.model = self._load_model(Wav2Vec2ForPreTraining, model_name)
         self.model.eval()
         self.feature_extractor = self._load_feature_extractor(Wav2Vec2FeatureExtractor, model_name)
@@ -62,7 +63,7 @@ class Wav2Vec2Extractor:
             return extractor_class.from_pretrained(extractor_name, cache_dir=EXTRACTORS_PATH)
 
 
-    def extract_features(self, wav_seqs, lengths=None):
+    def forward(self, wav_seqs, lengths=None):
         inputs = self.feature_extractor(wav_seqs, sampling_rate=self.sampling_rate, return_tensors='pt')
         inputs = inputs['input_values'].squeeze(0).to(self.model.device)
 
@@ -76,7 +77,6 @@ class Wav2Vec2Extractor:
             seqs_mask = torch.arange(features.shape[1])[None, :] < adjusted_lengths[:, None]
             seqs_mask = seqs_mask.to(self.model.device)
             features = features * seqs_mask.unsqueeze(-1)
-
         return features, adjusted_lengths, seqs_mask
 
     def get_output_lengths(self, input_lengths, add_adapter=None):

@@ -1,9 +1,11 @@
 import torch
 from torchaudio.transforms import MFCC, ComputeDeltas
+from torch import nn
 
-class MFCCExtractor:
+class MFCCExtractor(nn.Module):
     def __init__(self, n_mfcc=13, n_fft=640, hop_length=320,
                  n_mels=26, add_delta=False, sampling_rate=16000):
+        super().__init__()
         self.n_mfcc = n_mfcc
         self.n_fft = n_fft
         self.hop_length = hop_length
@@ -21,9 +23,10 @@ class MFCCExtractor:
                 'n_mels': n_mels
             }
         )
-        self.delta_transform = ComputeDeltas()
+        if add_delta:
+            self.delta_transform = ComputeDeltas()
 
-    def extract_features(self, wav_seqs, lengths=None):
+    def forward(self, wav_seqs, lengths=None):
         features = self.mfcc_transform(wav_seqs)
         if self.add_delta:
             delta1 = self.delta_transform(features)

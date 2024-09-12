@@ -4,12 +4,13 @@ from attrdict import AttrDict
 import torch
 from models import Generator
 from meldataset import MAX_WAV_VALUE
-
+from torch import nn
 VOCODERS_PATH = Path(__file__).parent.resolve() / "../out/vocoder"
 
-class HifiGAN:
+class HifiGAN(nn.Module):
 
     def __init__(self, model_name):
+        super().__init__()
         model_path = VOCODERS_PATH / model_name
         assert (model_path.parent / 'config.json').is_file()
         assert model_path.is_file()

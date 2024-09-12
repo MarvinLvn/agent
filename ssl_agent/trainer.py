@@ -99,7 +99,8 @@ class Trainer:
 
                 # 1) Extract features from the received stimuli
                 with torch.no_grad():
-                    feat_seqs, feat_seqs_len, feat_seqs_mask = self.nn.feature_extractor.extract_features(wav_seqs, wav_seqs_len)
+                    print(vars(self.nn.feature_extractor))
+                    feat_seqs, feat_seqs_len, feat_seqs_mask = self.nn.feature_extractor(wav_seqs, wav_seqs_len)
                     feat_seqs = feat_seqs.detach()
 
                 # 2) Inverse from representational space to articulatory space
@@ -173,7 +174,7 @@ class Trainer:
 
         # 5. Re-extract features
         wav_seqs_len = torch.minimum(audio_len, feat_seqs_len*self.nn.vocoder.frame_size)
-        feat_seqs_repeated, feat_seqs_len, feat_seqs_mask = self.nn.feature_extractor.extract_features(audio_seqs_repeated, wav_seqs_len)
+        feat_seqs_repeated, feat_seqs_len, feat_seqs_mask = self.nn.feature_extractor(audio_seqs_repeated, wav_seqs_len)
 
         # 6. Compute loss
         min_len = min(feat_seqs.shape[1], feat_seqs_repeated.shape[1])
