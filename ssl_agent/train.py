@@ -27,7 +27,7 @@ def main(argv):
 
     # 2. Start training
     print(f"Training {args.out_name} (datasplit_seed={config['dataset']['datasplit_seed']})")
-    if os.path.isdir(save_path):
+    if save_path.is_dir():
         print("Already done")
         exit()
 

@@ -134,7 +134,8 @@ class Trainer:
                                             epoch_record=epoch_record,
                                             regime=regime)
 
-                    training_record.save_epoch_metrics(f'{regime}_step', epoch_record, print=False)
+                training_record.save_epoch_metrics(f'{regime}_step', epoch_record, print=False)
+
         return epoch_record
 
     def step_inverse_model(self, feat_seqs, feat_seqs_len, feat_seqs_mask,
@@ -165,10 +166,10 @@ class Trainer:
         # Here, we interpolate the source from 10-ms timestamps to 20-ms
         source_seqs = torch.nn.functional.interpolate(source_seqs.permute(0, 2, 1), size=art_seqs_estimated.shape[1]).permute(0, 2, 1)
         art_source_seqs = torch.cat((art_seqs_estimated, source_seqs), dim=2).to(self.device)
-        mel_seqs_repeated = self.nn.synthesizer.nn(art_source_seqs)
+        mel_seqs_repeated = self.nn.synthesizer.nn(art_source_seqs).detach()
 
         # 4. Generate audio using the vocoder
-        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated)
+        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated).detach()
 
         # 5. Re-extract features
         wav_seqs_len = torch.minimum(audio_len, feat_seqs_len*self.nn.vocoder.frame_size)
