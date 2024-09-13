@@ -161,7 +161,7 @@ class SSLAgent(BaseAgent):
     def save(self, save_path):
         with open(save_path / "config.yaml", "w") as f:
             yaml.safe_dump(self.config, f)
-        with open(save_path / "/datasplits.pickle", "wb") as f:
+        with open(save_path / "datasplits.pickle", "wb") as f:
             pickle.dump(self.datasplits, f)
         torch.save(self.nn.state_dict(), save_path / "nn_weights.pt")
 

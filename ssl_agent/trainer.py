@@ -99,7 +99,6 @@ class Trainer:
 
                 # 1) Extract features from the received stimuli
                 with torch.no_grad():
-                    print(vars(self.nn.feature_extractor))
                     feat_seqs, feat_seqs_len, feat_seqs_mask = self.nn.feature_extractor(wav_seqs, wav_seqs_len)
                     feat_seqs = feat_seqs.detach()
 
@@ -167,10 +166,10 @@ class Trainer:
         # Here, we interpolate the source from 10-ms timestamps to 20-ms
         source_seqs = torch.nn.functional.interpolate(source_seqs.permute(0, 2, 1), size=art_seqs_estimated.shape[1]).permute(0, 2, 1)
         art_source_seqs = torch.cat((art_seqs_estimated, source_seqs), dim=2).to(self.device)
-        mel_seqs_repeated = self.nn.synthesizer.nn(art_source_seqs).detach()
+        mel_seqs_repeated = self.nn.synthesizer.nn(art_source_seqs)
 
         # 4. Generate audio using the vocoder
-        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated).detach()
+        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated)
 
         # 5. Re-extract features
         wav_seqs_len = torch.minimum(audio_len, feat_seqs_len*self.nn.vocoder.frame_size)

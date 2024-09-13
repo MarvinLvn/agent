@@ -57,7 +57,7 @@ def main(argv):
 
     utils.mkdir(save_path)
     agent.save(save_path)
-    with open(save_path + "/metrics.pickle", "wb") as f:
+    with open(save_path / "metrics.pickle", "wb") as f:
         pickle.dump(metrics_record, f)
 
 def parse_args(argv):

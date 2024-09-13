@@ -27,7 +27,6 @@ class Wav2Vec2Extractor(nn.Module):
         super().__init__()
         self.model = self._load_model(Wav2Vec2ForPreTraining, model_name)
         self.model.eval()
-        self.feature_extractor = self._load_feature_extractor(Wav2Vec2FeatureExtractor, model_name)
 
         self.num_layers = num_layers
         self.sampling_rate = sampling_rate
@@ -54,20 +53,8 @@ class Wav2Vec2Extractor(nn.Module):
                 output_hidden_states=True
             )
 
-    def _load_feature_extractor(self, extractor_class, extractor_name):
-        try:
-            return extractor_class.from_pretrained(extractor_name, cache_dir=EXTRACTORS_PATH, local_files_only=True)
-        except Exception as e:
-            print(f"Couldn't load feature extractor locally: {e}")
-            print("Attempting to download...")
-            return extractor_class.from_pretrained(extractor_name, cache_dir=EXTRACTORS_PATH)
-
-
     def forward(self, wav_seqs, lengths=None):
-        inputs = self.feature_extractor(wav_seqs, sampling_rate=self.sampling_rate, return_tensors='pt')
-        inputs = inputs['input_values'].squeeze(0).to(self.model.device)
-
-        outputs = self.model(inputs)
+        outputs = self.model(wav_seqs)
         features = outputs.hidden_states[self.num_layers]
 
         adjusted_lengths, seqs_mask = None, None

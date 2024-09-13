@@ -19,7 +19,7 @@ EXTRACTORS_PATH = Path(__file__).parent.resolve() / "../out/feature_extractor"
 DATA_PATH = Path(__file__).parent.resolve() / "../datasets"
 
 def mkdir(path):
-    pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    path.mkdir(parents=True, exist_ok=True)
 
 
 def read_yaml_file(filepath):
