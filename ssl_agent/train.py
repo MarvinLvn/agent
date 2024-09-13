@@ -120,9 +120,9 @@ def parse_args(argv):
                                  'Should likely be set to wav for this agent.')
     group_data.add_argument('--source_type', type=str, default='source',
                             help='Name of the source modality.')
-    group_data.add_argument('--train_prop', type=float, default=.64,
+    group_data.add_argument('--train_prop', type=float, default=64,
                             help='Proportion of the data used for training.')
-    group_data.add_argument('--val_prop', type=float, default=.16,
+    group_data.add_argument('--val_prop', type=float, default=16,
                             help='Proportion of the data used for validation.')
     group_data.add_argument('--datasplit_seed', type=int, default=None,
                             help='Random seed used to split the data.')

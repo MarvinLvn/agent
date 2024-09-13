@@ -123,11 +123,11 @@ def shuffle_and_split(items, splits_size, seed=None):
     splits = []
     for split_size in reversed(splits_size[1:]):
         split_len = round(items_len / 100 * split_size)
+        print(split_len)
         split = items[:split_len]
         splits.insert(0, split)
         items = items[split_len:]
     splits.insert(0, items)
-
     return splits
 
 
@@ -209,7 +209,7 @@ def create_config(args):
             'name': args.data_name,
             'sound_type': args.sound_type,
             'source_type': args.source_type,
-            'datasplits_size': [args.train_prop, args.val_prop, 1-args.train_prop-args.val_prop],
+            'datasplits_size': [args.train_prop, args.val_prop, 100-args.train_prop-args.val_prop],
             'datasplit_seed': args.datasplit_seed,
             'batch_size': args.batch_size,
             'num_workers': args.num_workers,
