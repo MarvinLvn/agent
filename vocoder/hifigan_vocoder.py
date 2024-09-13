@@ -35,7 +35,7 @@ class HifiGAN(nn.Module):
             mel_specs = mel_specs.permute(0, 2, 1)
 
         y_g_hat = self.generator(mel_specs)
-        resynth_sounds = y_g_hat.squeeze()
+        resynth_sounds = y_g_hat.squeeze(1)
         resynth_sounds = resynth_sounds * MAX_WAV_VALUE
         return resynth_sounds
 

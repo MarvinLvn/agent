@@ -24,10 +24,11 @@ def main(argv):
     # 1. Create agent
     agent = SSLAgent(config)
     save_path = AGENT_PATH / args.out_name
+    utils.mkdir(save_path)
 
     # 2. Start training
     print(f"Training {args.out_name} (datasplit_seed={config['dataset']['datasplit_seed']})")
-    if save_path.is_dir():
+    if (save_path / 'nn_weights.pt').is_file():
         print("Already done")
         exit()
 
@@ -44,7 +45,7 @@ def main(argv):
         losses_fn=losses_fn,
         max_epoch=config["training"]["max_epochs"],
         patience=config["training"]["patience"],
-        checkpoint_path="./out/checkpoint.pt",
+        checkpoint_path=save_path / "checkpoint.pt",
         nb_frames_discriminator=0,
         device=args.device,
     )
@@ -55,7 +56,6 @@ def main(argv):
     minutes, seconds = divmod(rem, 60)
     print(f"Took %d hours and %d minutes." % (hours, minutes))
 
-    utils.mkdir(save_path)
     agent.save(save_path)
     with open(save_path / "metrics.pickle", "wb") as f:
         pickle.dump(metrics_record, f)
@@ -137,7 +137,7 @@ def parse_args(argv):
     group_data.add_argument('--shuffle_between_epochs', action='store_true',
                             help='Whether data should be shuffled between each epoch.')
     group_data.add_argument('--cut_silences', action='store_true',
-                            help='Whether non-speech segments on extremeties '
+                            help='Whether non-speech segments on extremities '
                                  'of the audio should be cut off. Scripts will retrieve '
                                  'this information from the lab folder.')
 
