@@ -123,7 +123,6 @@ def shuffle_and_split(items, splits_size, seed=None):
     splits = []
     for split_size in reversed(splits_size[1:]):
         split_len = round(items_len / 100 * split_size)
-        print(split_len)
         split = items[:split_len]
         splits.insert(0, split)
         items = items[split_len:]
