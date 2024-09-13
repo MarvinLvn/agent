@@ -10,7 +10,7 @@ from lib.nn.feedforward import FeedForward
 from lib.nn.loss import compute_jerk_loss
 
 from inverse_model.inverse_model import InverseModel
-from ssl_agent_nn import SSLAgentNN
+from .ssl_agent_nn import SSLAgentNN
 from synthesizer.synthesizer import Synthesizer
 from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
 from feature_extractor.mfcc_extractor import MFCCExtractor
@@ -159,6 +159,8 @@ class SSLAgent(BaseAgent):
         return {"inverse_model": inverse_model_loss, "mse": mse, "bce": bce, "cosine": cosine_distance}
 
     def save(self, save_path):
+        if isinstance(save_path, str):
+            save_path = Path(save_path)
         with open(save_path / "config.yaml", "w") as f:
             yaml.safe_dump(self.config, f)
         with open(save_path / "datasplits.pickle", "wb") as f:
@@ -166,7 +168,9 @@ class SSLAgent(BaseAgent):
         torch.save(self.nn.state_dict(), save_path / "nn_weights.pt")
 
     @staticmethod
-    def reload(save_path, load_nn=True):
+    def reload(save_path):
+        if isinstance(save_path, str):
+            save_path = Path(save_path)
         with open(save_path / "config.yaml", "r") as f:
             config = yaml.safe_load(f)
         agent = SSLAgent(config)
@@ -174,40 +178,38 @@ class SSLAgent(BaseAgent):
         with open(save_path / "datasplits.pickle", "rb") as f:
             agent.datasplits = pickle.load(f)
 
-        if load_nn:
-            agent.nn.load_state_dict(torch.load(save_path / "nn_weights.pt"))
-            agent.nn.eval()
+        agent.nn.load_state_dict(torch.load(save_path / "nn_weights.pt"))
+        agent.nn.eval()
 
         return agent
 
-    def repeat(self, sound_seq):
-        nn_input = torch.FloatTensor(sound_seq).to("cuda")
+    def repeat(self, sound_seq, source_seq, device='cuda'):
+        sound_seq = torch.FloatTensor(sound_seq).to(device)
+        sound_seq = sound_seq[None, :]
+        source_seq = torch.FloatTensor(source_seq).to(device)
+        source_seq = source_seq[None, :]
         with torch.no_grad():
-            sound_seq_estimated, art_seq_estimated_unscaled = self.nn(
-                nn_input[None, :, :]
-            )
-            if hasattr(self.nn, 'art_quantizer'):
-                _, art_unit_seq, _, _ = self.nn.art_quantizer.encode(
-                    art_seq_estimated_unscaled,
-                )
-        sound_seq_estimated = sound_seq_estimated[0].cpu().numpy()
-        art_seq_estimated_unscaled = art_seq_estimated_unscaled[0].cpu().numpy()
-        art_seq_estimated = self.synthesizer.art_scaler.inverse_transform(
-            art_seq_estimated_unscaled
-        )
+            # 1) Extract representations
+            feat_seq, _, _ = self.feature_extractor(sound_seq)
+            # 2) Run inverse model
+            art_seq_estimated = self.nn(feat_seq)
+            # 3) Run synthesizer
+            source_seq = torch.nn.functional.interpolate(source_seq.permute(0, 2, 1),
+                                                         size=art_seq_estimated.shape[1]).permute(0, 2, 1)
+            art_source_seq_estimated = torch.cat((art_seq_estimated, source_seq), dim=2).to(device)
+            mel_spec_repeated = self.synthesizer.nn(art_source_seq_estimated)
+            # 4) Run vocoder
+            audio_seq_repeated = self.vocoder.resynth(mel_spec_repeated)
+            # 5) Re-extract representations
+            feat_seq_repeated, _, _ = self.feature_extractor(audio_seq_repeated)
 
-        sound_seq_repeated = self.synthesizer.synthesize(art_seq_estimated)
-        if hasattr(self.nn, 'art_quantizer'):
-            art_unit_seq = art_unit_seq[0].cpu().numpy()
-            return {
-                "sound_repeated": sound_seq_repeated,
-                "sound_estimated": sound_seq_estimated,
-                "art_estimated": art_seq_estimated,
-                "art_units": art_unit_seq,
-            }
+        min_len = min(feat_seq.shape[1], feat_seq_repeated.shape[1])
+        feat_seq = feat_seq[:, :min_len, :]
+        feat_seq_repeated = feat_seq_repeated[:, :min_len, :]
         return {
-            "sound_repeated": sound_seq_repeated,
-            "sound_estimated": sound_seq_estimated,
-            "art_estimated": art_seq_estimated,
+            "feat_seq": feat_seq[0].cpu().numpy(),
+            "art_estimated": art_seq_estimated[0].cpu().numpy(),
+            "feat_seq_repeated": feat_seq_repeated[0].cpu().numpy(),
+            "audio_seq_repeated": audio_seq_repeated[0].cpu().numpy()
         }
 
