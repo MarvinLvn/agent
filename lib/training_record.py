@@ -14,7 +14,8 @@ class TrainingRecord:
 
     def log_metrics(self, epoch_step, epoch_metrics):
         print(epoch_step)
-        longest_name_len = max([len(name) for name in epoch_metrics.metrics])
+        if len(epoch_metrics.metrics) != 0:
+            longest_name_len = max([len(name) for name in epoch_metrics.metrics])
         for metric_name, metric_value in epoch_metrics.metrics.items():
             print(f"- {metric_name: <{longest_name_len}} | {metric_value:.4f}")
 
