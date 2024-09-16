@@ -3,7 +3,6 @@ from pathlib import Path
 from attrdict import AttrDict
 import torch
 from models import Generator
-from meldataset import MAX_WAV_VALUE
 from torch import nn
 VOCODERS_PATH = Path(__file__).parent.resolve() / "../out/vocoder"
 
@@ -36,7 +35,6 @@ class HifiGAN(nn.Module):
 
         y_g_hat = self.generator(mel_specs)
         resynth_sounds = y_g_hat.squeeze(1)
-        resynth_sounds = resynth_sounds * MAX_WAV_VALUE
         return resynth_sounds
 
 

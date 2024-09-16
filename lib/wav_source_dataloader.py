@@ -80,6 +80,9 @@ def get_dataloaders(dataset_config, datasplits, cut_silences=True, max_len=None)
             split_sound_seqs = [sub_seg for seg in split_sound_seqs for sub_seg in torch.split(seg, max_len)]
             split_source_seqs = [sub_seg for seg in split_source_seqs for sub_seg in torch.split(seg, max_len//160)]
 
+        # Zero mean, unit variance normalization
+        split_sound_seqs = [(seg - seg.mean()) / seg.std() for seg in split_sound_seqs]
+
         split_dataloader = torch.utils.data.DataLoader(
             SoundSourceDataset(split_sound_seqs, split_source_seqs),
             batch_size=dataset_config["batch_size"],
