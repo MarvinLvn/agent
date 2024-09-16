@@ -90,13 +90,6 @@ class Trainer:
         if not is_training:
             self.nn.eval()
 
-        initial_weights = {
-            'inverse_model': self.nn.inverse_model.state_dict(),
-            'feature_extractor': self.nn.feature_extractor.model.state_dict(),
-            'synthesizer': self.nn.synthesizer.nn.state_dict(),
-            'vocoder': self.nn.vocoder.generator.state_dict()
-        }
-
         with torch.no_grad() if not is_training else nullcontext():
             for batch in tqdm(dataloader, total=nb_batch, leave=False):
                 wav_seqs, wav_seqs_len, _, source_seqs, _, _ = batch
@@ -142,35 +135,8 @@ class Trainer:
 
                 training_record.save_epoch_metrics(f'{regime}_step', epoch_record, print=False)
 
-                if is_training:
-                    self.check_weights(initial_weights)
-
         return epoch_record
 
-    def check_weights(self, initial_weights):
-        def weights_changed(model_name, initial, current):
-            for (k1, v1), (k2, v2) in zip(initial.items(), current.items()):
-                if not torch.equal(v1, v2):
-                    print(f"{model_name} weights changed for parameter: {k1}")
-                    return True
-            return False
-
-        inverse_changed = weights_changed('Inverse model', initial_weights['inverse_model'],
-                                          self.nn.inverse_model.state_dict())
-        feature_changed = weights_changed('Feature extractor', initial_weights['feature_extractor'],
-                                          self.nn.feature_extractor.model.state_dict())
-        synthesizer_changed = weights_changed('Synthesizer', initial_weights['synthesizer'],
-                                              self.nn.synthesizer.nn.state_dict())
-        vocoder_changed = weights_changed('Vocoder', initial_weights['vocoder'], self.nn.vocoder.generator.state_dict())
-
-        if not inverse_changed:
-            print("Warning: Inverse model weights did not change in this batch.")
-        if feature_changed:
-            print("Warning: Feature extractor weights changed unexpectedly.")
-        if synthesizer_changed:
-            print("Warning: Synthesizer weights changed unexpectedly.")
-        if vocoder_changed:
-            print("Warning: Vocoder weights changed unexpectedly.")
 
     def step_inverse_model(self, feat_seqs, feat_seqs_len, feat_seqs_mask,
                            source_seqs, audio_len, epoch_record, regime):
