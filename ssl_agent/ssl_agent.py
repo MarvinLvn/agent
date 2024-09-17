@@ -10,7 +10,7 @@ from lib.nn.feedforward import FeedForward
 from lib.nn.loss import compute_jerk_loss
 
 from inverse_model.inverse_model import InverseModel
-from ssl_agent_nn import SSLAgentNN
+from ssl_agent.ssl_agent_nn import SSLAgentNN
 from synthesizer.synthesizer import Synthesizer
 from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
 from feature_extractor.mfcc_extractor import MFCCExtractor
@@ -23,7 +23,7 @@ EXTRACTORS_PATH = Path(__file__).parent.resolve() / "../out/feature_extractor"
 
 
 class SSLAgent(BaseAgent):
-    def __init__(self, config):
+    def __init__(self, config, device='cuda'):
         self.config = config
         self.datasplits = None
 
@@ -37,20 +37,29 @@ class SSLAgent(BaseAgent):
                                                    n_mels=self.config['feature_extractor']['n_mels'],
                                                    add_delta=self.config['feature_extractor']['add_delta'],
                                                    sampling_rate=self.config['feature_extractor']['sampling_rate'])
+            self.feature_extractor.mfcc_transform.to(device)
+            self.feature_extractor.delta_transform.to(device)
         else:
             self.feature_extractor = Wav2Vec2Extractor(model_name=self.config['feature_extractor']['name'],
                                                        num_layers=self.config['feature_extractor']['layer'],
                                                        sampling_rate=self.config['feature_extractor']['sampling_rate'])
+            self.feature_extractor.model.to(device)
 
         # 2) We load the synthesizer (art_params -> mel_spectro)
         self.synthesizer = Synthesizer.reload("%s/%s" % (SYNTHESIZERS_PATH, config["synthesizer"]["name"]), load_nn=True)
+        self.synthesizer.nn.to(device)
 
         # 3) We load the HiFi-GAN vocoder (mel_spectro -> wav)
         self.vocoder = HifiGAN(self.config['vocoder']['name'])
+        self.vocoder.generator.to(device)
 
         # 4) We build the inverse model (+ discriminator model)
         self._build_nn(self.config["model"])
         self.nn.eval()
+
+        # 5) We move everything to the right device
+        self.nn.to(device)
+
 
     def _build_nn(self, model_config):
         self.art_dim = self.synthesizer.art_dim
@@ -168,24 +177,23 @@ class SSLAgent(BaseAgent):
         torch.save(self.nn.state_dict(), save_path / "nn_weights.pt")
 
     @staticmethod
-    def reload(save_path):
+    def reload(save_path, device='cuda'):
         if isinstance(save_path, str):
             save_path = Path(save_path)
         with open(save_path / "config.yaml", "r") as f:
             config = yaml.safe_load(f)
-        agent = SSLAgent(config)
+        agent = SSLAgent(config, device=device)
 
         with open(save_path / "datasplits.pickle", "rb") as f:
             agent.datasplits = pickle.load(f)
 
-        agent.nn.load_state_dict(torch.load(save_path / "nn_weights.pt"))
+        agent.nn.load_state_dict(torch.load(save_path / "nn_weights.pt", map_location=device))
         agent.nn.eval()
 
         return agent
 
     def repeat(self, sound_seq, source_seq, device='cuda'):
         sound_seq = torch.FloatTensor(sound_seq).to(device)
-        sound_seq = (sound_seq - sound_seq.mean()) / sound_seq.std()
         sound_seq = sound_seq[None, :]
         source_seq = torch.FloatTensor(source_seq).to(device)
         source_seq = source_seq[None, :]
@@ -194,13 +202,16 @@ class SSLAgent(BaseAgent):
             feat_seq, _, _ = self.feature_extractor(sound_seq)
             # 2) Run inverse model
             art_seq_estimated = self.nn(feat_seq)
+
             # 3) Run synthesizer
             source_seq = torch.nn.functional.interpolate(source_seq.permute(0, 2, 1),
                                                          size=art_seq_estimated.shape[1]).permute(0, 2, 1)
             art_source_seq_estimated = torch.cat((art_seq_estimated, source_seq), dim=2).to(device)
             mel_spec_repeated = self.synthesizer.nn(art_source_seq_estimated)
+
             # 4) Run vocoder
             audio_seq_repeated = self.vocoder.resynth(mel_spec_repeated)
+            
             # 5) Re-extract representations
             feat_seq_repeated, _, _ = self.feature_extractor(audio_seq_repeated)
 
