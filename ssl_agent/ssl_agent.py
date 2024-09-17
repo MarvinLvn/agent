@@ -211,6 +211,7 @@ class SSLAgent(BaseAgent):
             "feat_seq": feat_seq[0].cpu().numpy(),
             "art_estimated": art_seq_estimated[0].cpu().numpy(),
             "feat_seq_repeated": feat_seq_repeated[0].cpu().numpy(),
+            "mel_spec_repeated": mel_spec_repeated[0].cpu().numpy(),
             "audio_seq_repeated": audio_seq_repeated[0].cpu().numpy()
         }
 
