@@ -174,8 +174,8 @@ class Dataset:
             end = item_lab[-1]["end"]
 
         if is_wav:
-            start *= 160
-            end *= 160
+            start *= 320
+            end *= 320
 
         return item_data[start:end]
 

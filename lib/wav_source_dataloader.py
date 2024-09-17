@@ -78,7 +78,8 @@ def get_dataloaders(dataset_config, datasplits, cut_silences=True, max_len=None)
 
         if max_len is not None:
             split_sound_seqs = [sub_seg for seg in split_sound_seqs for sub_seg in torch.split(seg, max_len)]
-            split_source_seqs = [sub_seg for seg in split_source_seqs for sub_seg in torch.split(seg, max_len//160)]
+            nb_frames_source = dataset.features_config['wav_sampling_rate'] // dataset.features_config['ema_sampling_rate']
+            split_source_seqs = [sub_seg for seg in split_source_seqs for sub_seg in torch.split(seg, max_len//nb_frames_source)]
 
         # Zero mean, unit variance normalization
         split_sound_seqs = [(seg - seg.mean()) / seg.std() for seg in split_sound_seqs]
