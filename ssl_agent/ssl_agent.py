@@ -185,6 +185,7 @@ class SSLAgent(BaseAgent):
 
     def repeat(self, sound_seq, source_seq, device='cuda'):
         sound_seq = torch.FloatTensor(sound_seq).to(device)
+        sound_seq = (sound_seq - sound_seq.mean()) / sound_seq.std()
         sound_seq = sound_seq[None, :]
         source_seq = torch.FloatTensor(source_seq).to(device)
         source_seq = source_seq[None, :]

@@ -6,7 +6,7 @@ model:
 dataset:
   name: pb2009
   art_type: art_params
-  sound_type: mel_10ms
+  sound_type: mel_20ms
   source_type: source
   format: .npy
   datasplits_size: [90, 10, 0] # train/validation/test in percentage
