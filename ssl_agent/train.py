@@ -66,7 +66,7 @@ def parse_args(argv):
     group_arch = parser.add_argument_group('Architecture')
     # Mandatory parameters
     group_arch.add_argument('--synthesizer', type=str,
-                            choices=['mel_synth'],
+                            choices=['mel_synth_20_ms'],
                             help='Name of the synthesizer to be used to train the inverse model. '
                                  'Should lie in agent/out/synthesizer.')
     group_arch.add_argument('--vocoder', type=str,

@@ -5,7 +5,7 @@
       dropout_p: 0.17
       bidirectional: true
   synthesizer:
-    name: mel_synth
+    name: mel_synth_20_ms
   vocoder:
     name: cp_hifigan_20_ms/g_00190000
 #  feature_extractor:
