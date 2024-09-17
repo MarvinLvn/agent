@@ -1,2 +1,2 @@
-ema_sampling_rate: 100
+ema_sampling_rate: 50
 wav_sampling_rate: 16000

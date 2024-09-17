@@ -88,6 +88,7 @@ def extract_source_and_mel(dataset_name, format='.bin'):
 
     wavfiles_dir = "datasets/%s/wav" % dataset_name
     wavfiles_path = glob("%s/*.wav" % wavfiles_dir)
+    lengths = {}
     for wavfile_path in tqdm(wavfiles_path):
         item_name = utils.parse_item_name(wavfile_path)
 
@@ -97,7 +98,18 @@ def extract_source_and_mel(dataset_name, format='.bin'):
         audio = pcm / MAX_WAV_VALUE
         audio = torch.FloatTensor(audio).unsqueeze(0)
         item_mel = get_mel(audio).squeeze(0).numpy()
+        lengths[item_name] = item_mel.shape[1]
         item_source = get_source(pcm)
+        current_length = item_source.shape[0]
+        tgt_length = item_mel.shape[1]
+        if current_length != tgt_length:
+            current_indices = np.arange(current_length)
+            target_indices = np.linspace(0, current_length - 1, tgt_length)
+            item_source = np.column_stack([
+                np.interp(target_indices, current_indices, item_source[:, i])
+                for i in range(item_source.shape[1])
+            ])
+
 
         if format == '.bin':
             item_mel.tofile("%s/%s.bin" % (mel_export_dir, item_name))
@@ -107,6 +119,7 @@ def extract_source_and_mel(dataset_name, format='.bin'):
             np.save("%s/%s.npy" % (source_export_dir, item_name), item_source)
         else:
             raise ValueError(f"Unknown output format for mel-spec {format}")
+    return lengths
 
 def preprocess_ema(
     dataset_name,
@@ -168,7 +181,7 @@ def preprocess_ema(
     return items_ema
 
 
-def extract_art_parameters(dataset_name, items_ema, format='.bin'):
+def extract_art_parameters(dataset_name, items_ema, tgt_lengths, format='.bin'):
     dataset_dir = "datasets/%s" % dataset_name
 
     all_ema_frames = np.concatenate(list(items_ema.values()), axis=0)
@@ -178,9 +191,17 @@ def extract_art_parameters(dataset_name, items_ema, format='.bin'):
 
     export_dir = "datasets/%s/art_params" % dataset_name
     utils.mkdir(export_dir)
-
-    for item_name, item_ema in tqdm(items_ema.items()):
+    for i, (item_name, item_ema) in tqdm(enumerate(items_ema.items())):
         item_art = art_model.ema_to_art(art_model_params, item_ema)
+        current_length = item_art.shape[0]
+        tgt_length = tgt_lengths[item_name]
+        if current_length != tgt_length:
+            current_indices = np.arange(current_length)
+            target_indices = np.linspace(0, current_length - 1, tgt_length)
+            item_art = np.column_stack([
+                np.interp(target_indices, current_indices, item_art[:, i])
+                for i in range(item_art.shape[1])
+            ])
         if format == '.bin':
             item_art.astype("float32").tofile("%s/%s.bin" % (export_dir, item_name))
         elif format == '.npy':
@@ -242,7 +263,7 @@ def main():
             # print("Resampling WAV files done")
 
             print("Extracting source & mel-spectrograms...")
-            extract_source_and_mel(dataset_name, format=format)
+            tgt_lengths = extract_source_and_mel(dataset_name, format=format)
             print("Extracting source & mel-spectrograms done")
 
             if "ema_pathname" in dataset_infos:
@@ -262,7 +283,7 @@ def main():
                 print("Preprocessing EMA done")
 
                 print("Extracting articulatory model and parameters...")
-                extract_art_parameters(dataset_name, items_ema, format='.npy')
+                extract_art_parameters(dataset_name, items_ema, tgt_lengths, format='.npy')
                 print("Extracting articulatory model and parameters done")
             if "lab_pathname" in dataset_infos:
                 print("Resampling LAB files...")
