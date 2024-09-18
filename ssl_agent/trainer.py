@@ -170,7 +170,7 @@ class Trainer:
         mel_seqs_repeated = self.nn.synthesizer.sound_scaler_diff.inverse_transform(mel_seqs_repeated)
 
         # 4. Generate audio using the vocoder
-        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated.permute(0, 2, 1))
+        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated.permute(0, 2, 1), save_path=self.checkpoint_path.parent)
 
         # 5. Re-extract features
         wav_seqs_len = torch.minimum(audio_len, feat_seqs_len*self.nn.vocoder.frame_size)

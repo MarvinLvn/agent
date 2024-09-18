@@ -30,10 +30,21 @@ class HifiGAN(nn.Module):
         self.generator.eval()
         self.generator.remove_weight_norm()
         self.frame_size = self.generator.h['hop_size']
+        self.counter = 0
 
     def resynth(self, mel_specs, save_path=None):
         y_g_hat = self.generator(mel_specs)
         resynth_sounds = y_g_hat.squeeze(1)
+        if self.counter % 400 == 0:
+            sample = resynth_sounds[0, :].clone().detach().cpu()
+            torchaudio.save(str(save_path / f'{self.counter}.wav'),
+                            sample.unsqueeze(0),
+                            sample_rate=16000)
+            plt.figure(figsize=(12, 4))
+            plt.plot(sample.numpy())
+            plt.savefig(str(save_path / f'{self.counter}.png'), dpi=200)
+            plt.close()
+        self.counter += 1
         return resynth_sounds
 
 
