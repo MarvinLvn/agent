@@ -4,6 +4,8 @@ from attrdict import AttrDict
 import torch
 from models import Generator
 from torch import nn
+import torchaudio
+import matplotlib.pyplot as plt
 VOCODERS_PATH = Path(__file__).parent.resolve() / "../out/vocoder"
 
 class HifiGAN(nn.Module):
@@ -29,10 +31,7 @@ class HifiGAN(nn.Module):
         self.generator.remove_weight_norm()
         self.frame_size = self.generator.h['hop_size']
 
-    def resynth(self, mel_specs):
-        if mel_specs.shape[2] == 80:
-            mel_specs = mel_specs.permute(0, 2, 1)
-
+    def resynth(self, mel_specs, save_path=None):
         y_g_hat = self.generator(mel_specs)
         resynth_sounds = y_g_hat.squeeze(1)
         return resynth_sounds

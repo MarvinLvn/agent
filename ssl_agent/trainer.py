@@ -163,13 +163,14 @@ class Trainer:
                 predicted_labels = self.nn.discriminator_model(art_seqs_estimated[feat_seqs_mask])
 
         # 3. Synthesize mel spectro using the synthesizer
-        # Here, we interpolate the source from 10-ms timestamps to 20-ms
+        # Here, we interpolate the source so that we have the right number of frames
         source_seqs = torch.nn.functional.interpolate(source_seqs.permute(0, 2, 1), size=art_seqs_estimated.shape[1]).permute(0, 2, 1)
         art_source_seqs = torch.cat((art_seqs_estimated, source_seqs), dim=2).to(self.device)
         mel_seqs_repeated = self.nn.synthesizer.nn(art_source_seqs)
+        mel_seqs_repeated = self.nn.synthesizer.sound_scaler_diff.inverse_transform(mel_seqs_repeated)
 
         # 4. Generate audio using the vocoder
-        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated)
+        audio_seqs_repeated = self.nn.vocoder.resynth(mel_seqs_repeated.permute(0, 2, 1))
 
         # 5. Re-extract features
         wav_seqs_len = torch.minimum(audio_len, feat_seqs_len*self.nn.vocoder.frame_size)
@@ -247,3 +248,4 @@ class Trainer:
         new_mask = art_seqs_mask[:, :nb_windows]
         unfolded_art = unfolded_art[new_mask].transpose(1, 2)
         return unfolded_art
+

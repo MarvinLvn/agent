@@ -25,7 +25,7 @@ class InverseModel(BaseAgent):
             self.nn.eval()
 
     def _build_nn(self, model_config):
-        self.sound_dim =  self.dataset.get_modality_dim(self.config["dataset"]["sound_type"])
+        self.sound_dim = self.dataset.get_modality_dim(self.config["dataset"]["sound_type"])
         self.art_dim = self.dataset.get_modality_dim(self.config["dataset"]["art_type"])
 
         self.nn = InverseModel.build_lstm(self.sound_dim, self.art_dim,

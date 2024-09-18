@@ -8,6 +8,7 @@ from lib.wav_source_dataloader import get_dataloaders as get_sound_source_loader
 from lib.nn.simple_lstm import LSTM_FF
 from lib.nn.feedforward import FeedForward
 from lib.nn.loss import compute_jerk_loss
+from lib.nn.data_scaler import DataScaler
 
 from inverse_model.inverse_model import InverseModel
 from ssl_agent_nn import SSLAgentNN
@@ -48,6 +49,7 @@ class SSLAgent(BaseAgent):
         # 2) We load the synthesizer (art_params -> mel_spectro)
         self.synthesizer = Synthesizer.reload("%s/%s" % (SYNTHESIZERS_PATH, config["synthesizer"]["name"]), load_nn=True)
         self.synthesizer.nn.to(device)
+        self.synthesizer.sound_scaler_diff = DataScaler.from_standard_scaler(self.synthesizer.sound_scaler).to(device)
 
         # 3) We load the HiFi-GAN vocoder (mel_spectro -> wav)
         self.vocoder = HifiGAN(self.config['vocoder']['name'])
@@ -208,6 +210,7 @@ class SSLAgent(BaseAgent):
                                                          size=art_seq_estimated.shape[1]).permute(0, 2, 1)
             art_source_seq_estimated = torch.cat((art_seq_estimated, source_seq), dim=2).to(device)
             mel_spec_repeated = self.synthesizer.nn(art_source_seq_estimated)
+            mel_spec_repeated = self.synthesizer.sound_scaler_diff.inverse_transform(mel_spec_repeated)
 
             # 4) Run vocoder
             audio_seq_repeated = self.vocoder.resynth(mel_spec_repeated)
