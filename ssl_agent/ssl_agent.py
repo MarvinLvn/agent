@@ -9,6 +9,7 @@ from lib.nn.simple_lstm import LSTM_FF
 from lib.nn.feedforward import FeedForward
 from lib.nn.loss import compute_jerk_loss
 from lib.nn.data_scaler import DataScaler
+from lib.dataset_wrapper import Dataset
 
 from inverse_model.inverse_model import InverseModel
 from ssl_agent_nn import SSLAgentNN
@@ -213,7 +214,7 @@ class SSLAgent(BaseAgent):
             mel_spec_repeated = self.synthesizer.sound_scaler_diff.inverse_transform(mel_spec_repeated)
 
             # 4) Run vocoder
-            audio_seq_repeated = self.vocoder.resynth(mel_spec_repeated)
+            audio_seq_repeated = self.vocoder.resynth(mel_spec_repeated.permute(0, 2, 1))
             
             # 5) Re-extract representations
             feat_seq_repeated, _, _ = self.feature_extractor(audio_seq_repeated)
@@ -229,3 +230,50 @@ class SSLAgent(BaseAgent):
             "audio_seq_repeated": audio_seq_repeated[0].cpu().numpy()
         }
 
+    # Should be moved to BaseAgent once Imitative and Communicative Agent will be removed
+    def get_main_dataset(self):
+        return Dataset(self.config["dataset"]["name"])
+
+    def get_datasplit_lab(self, datasplit_index=None):
+        datasplit_lab = {}
+
+        dataset = self.get_main_dataset()
+        dataset_name = self.config["dataset"]["name"]
+        if datasplit_index is None:
+            dataset_lab = dataset.lab
+        else:
+            dataset_split = self.datasplits[datasplit_index]
+            dataset_lab = {
+                item_name: dataset.lab[item_name] for item_name in dataset_split
+            }
+        datasplit_lab[dataset_name] = dataset_lab
+        return datasplit_lab
+
+    def repeat_datasplit(self, datasplit_index=None):
+        agent_features = {}
+        sound_type = self.config["dataset"]["sound_type"]
+        dataset_name = self.config["dataset"]["name"]
+        dataset_features = {}
+
+        dataset = Dataset(dataset_name)
+        if datasplit_index is None:
+            items_name = dataset.get_items_name(sound_type)
+        else:
+            items_name = self.datasplits[datasplit_index]
+
+        fmt = '.npy'
+        if self.config["dataset"]["sound_type"] == 'wav':
+            fmt = '.wav'
+        items_sound = dataset.get_items_data(self.config["dataset"]["sound_type"], format=fmt)
+        items_source = dataset.get_items_data(self.config["dataset"]["source_type"], format='.npy')
+        for item_name in items_name:
+            item_sound = items_sound[item_name]
+            item_source = items_source[item_name]
+            repetition = self.repeat(item_sound, item_source)
+            for repetition_type, repetition_data in repetition.items():
+                if repetition_type not in dataset_features:
+                    dataset_features[repetition_type] = {}
+                dataset_features[repetition_type][item_name] = repetition_data
+
+        agent_features[dataset_name] = dataset_features
+        return agent_features
