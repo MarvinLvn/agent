@@ -19,11 +19,12 @@ class Trainer:
         max_epoch,
         patience,
         checkpoint_path,
-        nb_frames_discriminator=1,
+        discriminator_nb_frames=1,
         device="cpu",
     ):
         self.nn = nn.to(device)
         self.nn.synthesizer.nn.to(device)
+        self.nn.synthesizer.sound_scaler_diff.to(device)
         self.nn.vocoder.generator.to(device)
         if isinstance(self.nn.feature_extractor, Wav2Vec2Extractor):
             self.nn.feature_extractor.model.to(device)
@@ -42,7 +43,7 @@ class Trainer:
         if self.nn.discriminator_model is not None:
             self.train_artloader, self.validation_artloader, self.test_artloader = self.nn.synthesizer.get_dataloaders(fit=True, transform=True)
         self.checkpoint_path = checkpoint_path
-        self.nb_frame_discriminators = nb_frames_discriminator
+        self.discriminator_nb_frames = discriminator_nb_frames
         self.device = device
 
     def train(self):
@@ -116,12 +117,12 @@ class Trainer:
                 if self.nn.discriminator_model is not None and art_loader is not None:
                     try:
                         # We sample a batch of real articulatory trajectories
-                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_iter)
+                        art_seqs, _, _, art_seqs_len, art_seqs_mask = next(art_loader_iter)
                         art_seqs = art_seqs.to(self.device)
                     except StopIteration:
                         # Recreate iterator when the whole data has been consumed
                         art_loader_iter = iter(art_loader)
-                        art_seqs, speaker_art_seqs, art_seqs_len, art_seqs_mask = next(art_loader_iter)
+                        art_seqs, _, _, art_seqs_len, art_seqs_mask = next(art_loader_iter)
                         art_seqs = art_seqs.to(self.device)
                     self.step_discriminator(feat_seqs,
                                             # Input to the generator from which to generate articulatory data
@@ -153,11 +154,13 @@ class Trainer:
 
         # 1. Inverse features into articulatory space
         art_seqs_estimated = self.nn.inverse_model(feat_seqs, seqs_len=feat_seqs_len)
-
+        print("art_seqs_estimated %.2f %.2f %.2f %.2f" % (art_seqs_estimated.mean().item(), art_seqs_estimated.std().item(),
+              art_seqs_estimated.min().item(), art_seqs_estimated.max().item()))
         # 2. Run discriminator if relevant
+        predicted_labels = None
         if self.nn.discriminator_model is not None:
             if isinstance(self.nn.discriminator_model, LSTM_FF):
-                unfolded_art = self.__create_sliding_windows(art_seqs_estimated, feat_seqs_mask, self.nb_frame_discriminators)
+                unfolded_art = self.__create_sliding_windows(art_seqs_estimated, feat_seqs_mask, self.discriminator_nb_frames)
                 predicted_labels = self.nn.discriminator_model(unfolded_art)
             else:
                 predicted_labels = self.nn.discriminator_model(art_seqs_estimated[feat_seqs_mask])
@@ -182,13 +185,15 @@ class Trainer:
         feat_seqs_repeated = feat_seqs_repeated[:, :min_len, :]
         feat_seqs_mask = feat_seqs_mask[:, :min_len]
 
-        inverse_loss = self.losses_fn['mse'](feat_seqs, feat_seqs_repeated, feat_seqs_mask)
+        inverse_loss, reconstruction_loss, fool_discrimination_loss = self.losses_fn['inverse_loss'](feat_seqs, feat_seqs_repeated, feat_seqs_mask, predicted_labels)
 
         if is_training:
             inverse_loss.backward()
             self.optimizers["inverse_model"].step()
 
         epoch_record.add("inverse_loss", inverse_loss.item())
+        epoch_record.add("reconstruction_loss", reconstruction_loss.item())
+        epoch_record.add("fool_discrimination_loss", fool_discrimination_loss.item())
 
 
     def step_discriminator(self, feat_seqs, seqs_len, seqs_mask,
@@ -201,7 +206,7 @@ class Trainer:
 
         # 1) Real batch training
         if isinstance(self.nn.discriminator_model, LSTM_FF):
-            unfolded_art = self.__create_sliding_windows(art_seqs, art_seqs_mask, self.nb_frame_discriminators)
+            unfolded_art = self.__create_sliding_windows(art_seqs, art_seqs_mask, self.discriminator_nb_frames)
             predicted_labels = self.nn.discriminator_model(unfolded_art)
         else:
             predicted_labels = self.nn.discriminator_model(art_seqs[art_seqs_mask])
@@ -215,11 +220,15 @@ class Trainer:
         # 2) Fake batch training
         # a) Generate fake articulatory data
         fake_art_seqs = self.nn.inverse_model(feat_seqs, seqs_len=seqs_len).to(self.device)
+        print("art_seqs %.2f %.2f %.2f %.2f" % (art_seqs.mean().item(), art_seqs.std().item(),
+              art_seqs.min().item(), art_seqs.max().item()))
+        print("fake_art_seqs %.2f %.2f %.2f %.2f" % (fake_art_seqs.mean().item(), fake_art_seqs.std().item(),
+              fake_art_seqs.min().item(), fake_art_seqs.max().item()))
 
         # b) Predict labels
         # We detach to only compute gradients for the discriminator and not the generator
         if isinstance(self.nn.discriminator_model, LSTM_FF):
-            unfolded_fake_art = self.__create_sliding_windows(fake_art_seqs, seqs_mask, self.nb_frame_discriminators)
+            unfolded_fake_art = self.__create_sliding_windows(fake_art_seqs, seqs_mask, self.discriminator_nb_frames)
             predicted_labels = self.nn.discriminator_model(unfolded_fake_art.detach())
         else:
             predicted_labels = self.nn.discriminator_model(fake_art_seqs[seqs_mask].detach())

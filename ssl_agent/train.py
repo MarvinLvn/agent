@@ -36,6 +36,11 @@ def main(argv):
     optimizers = agent.get_optimizers()
     losses_fn = agent.get_losses_fn()
 
+    discriminator_nb_frames = 1
+    if 'discriminator_model' in config['model'] \
+            and 'nb_frames' in config["model"]["discriminator_model"]:
+        discriminator_nb_frames = config["model"]["discriminator_model"]['nb_frames']
+
     trainer = Trainer(
         nn=agent.nn,
         optimizers=optimizers,
@@ -46,9 +51,10 @@ def main(argv):
         max_epoch=config["training"]["max_epochs"],
         patience=config["training"]["patience"],
         checkpoint_path=save_path / "checkpoint.pt",
-        nb_frames_discriminator=0,
+        discriminator_nb_frames=discriminator_nb_frames,
         device=args.device,
     )
+
     start_time = time.time()
     metrics_record = trainer.train()
     end_time = time.time()
@@ -109,7 +115,15 @@ def parse_args(argv):
     group_arch.add_argument('--add_delta', action='store_true',
                             help='Whether to add delta and delta2. '
                                  'Only used if --extractor=mfcc.')
-
+    # Discriminator parameters
+    group_arch.add_argument('--discriminator_num_layers', type=int, default=1)
+    group_arch.add_argument('--discriminator_bidirectional', action='store_true')
+    group_arch.add_argument('--discriminator_hidden_size', type=int, default=64)
+    group_arch.add_argument('--discriminator_dropout_p', type=float, default=.25)
+    group_arch.add_argument('--discriminator_ff_activation', choices=['relu'], default='relu')
+    group_arch.add_argument('--discriminator_ff_hidden_layers', nargs='+', type=int, default=[128, 64])
+    group_arch.add_argument('--discriminator_nb_frames', type=int, default=3)
+    group_arch.add_argument('--discriminator', action='store_true')
 
     group_data = parser.add_argument_group('Dataset')
     group_data.add_argument('--data_name', type=str,

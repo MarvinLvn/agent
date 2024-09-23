@@ -1,13 +1,10 @@
 import torch
 import pickle
 import yaml
-import os
 from lib.base_agent import BaseAgent
 from lib.wav_source_dataloader import get_dataloaders as get_sound_source_loaders
-
 from lib.nn.simple_lstm import LSTM_FF
 from lib.nn.feedforward import FeedForward
-from lib.nn.loss import compute_jerk_loss
 from lib.nn.data_scaler import DataScaler
 from lib.dataset_wrapper import Dataset
 
@@ -119,32 +116,24 @@ class SSLAgent(BaseAgent):
         if "discriminator_model" in self.config["model"]:
             optimizers["discriminator_model"] = torch.optim.Adam(
                 self.nn.discriminator_model.parameters(),
-                lr=self.config["training"]["discriminator_model_learning_rate"]
+                lr=self.config["training"]["discriminator_learning_rate"]
             )
         return optimizers
 
     def get_losses_fn(self):
-        art_scaler_var = torch.FloatTensor(self.synthesizer.art_scaler.var_).to("cuda")
         bce_loss = torch.nn.BCELoss()
 
-        def inverse_model_loss(art_seqs_pred, sound_seqs_pred, sound_seqs, seqs_mask,
-                               predicted_labels):
+        def inverse_model_loss(sound_seqs_pred, sound_seqs, seqs_mask, predicted_labels):
             reconstruction_loss = mse(sound_seqs_pred, sound_seqs, seqs_mask)
 
-            art_seqs_pred = art_seqs_pred * art_scaler_var
-            jerk_loss = compute_jerk_loss(art_seqs_pred, seqs_mask)
-
+            total_loss = reconstruction_loss
             # Fake labels are real for the generator
-            real_labels = torch.full(predicted_labels.shape, 1, dtype=torch.float).to(predicted_labels.device)
-            fool_discrimination_loss = bce_loss(predicted_labels, real_labels)
-
-            total_loss = (
-                    reconstruction_loss +
-                    jerk_loss * self.config["training"]["jerk_loss_weight"] +
-                    fool_discrimination_loss * self.config["training"]["discriminator_loss_weight"]
-            )
-
-            return total_loss, reconstruction_loss, jerk_loss, fool_discrimination_loss
+            fool_discrimination_loss = torch.FloatTensor([0.0])
+            if predicted_labels is not None:
+                real_labels = torch.full(predicted_labels.shape, 1, dtype=torch.float).to(predicted_labels.device)
+                fool_discrimination_loss = bce_loss(predicted_labels, real_labels)
+                total_loss += fool_discrimination_loss * self.config["training"]["discriminator_loss_weight"]
+            return total_loss, reconstruction_loss, fool_discrimination_loss
 
         def mse(seqs_pred, seqs, seqs_mask):
             reconstruction_error = (seqs_pred - seqs) ** 2
@@ -168,7 +157,7 @@ class SSLAgent(BaseAgent):
                 mean_distance = torch.tensor(0.0, device=feat_seqs.device)
             return mean_distance
 
-        return {"inverse_model": inverse_model_loss, "mse": mse, "bce": bce, "cosine": cosine_distance}
+        return {"inverse_loss": inverse_model_loss, "mse": mse, "bce": bce, "cosine": cosine_distance}
 
     def save(self, save_path):
         if isinstance(save_path, str):

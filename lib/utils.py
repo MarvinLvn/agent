@@ -226,7 +226,22 @@ def create_config(args):
             'discriminator_loss_weight': args.discriminator_loss_weight,
         }
     }
-
+    if args.discriminator:
+        out['model']['discriminator_model'] = {
+            'nb_frames': args.discriminator_nb_frames,
+            'rnn': {
+                'ff': {
+                    'activation': args.discriminator_ff_activation,
+                    'hidden_layers': args.discriminator_ff_hidden_layers
+                },
+                'lstm': {
+                    'bidirectional': args.discriminator_bidirectional,
+                    'dropout_p': args.discriminator_dropout_p,
+                    'hidden_size': args.discriminator_hidden_size,
+                    'num_layers': args.discriminator_num_layers
+                }
+            }
+        }
     if args.extractor == 'mfcc':
         out['feature_extractor'] = {
             'name': 'mfcc',
