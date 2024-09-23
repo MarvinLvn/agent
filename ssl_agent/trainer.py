@@ -154,8 +154,6 @@ class Trainer:
 
         # 1. Inverse features into articulatory space
         art_seqs_estimated = self.nn.inverse_model(feat_seqs, seqs_len=feat_seqs_len)
-        print("art_seqs_estimated %.2f %.2f %.2f %.2f" % (art_seqs_estimated.mean().item(), art_seqs_estimated.std().item(),
-              art_seqs_estimated.min().item(), art_seqs_estimated.max().item()))
         # 2. Run discriminator if relevant
         predicted_labels = None
         if self.nn.discriminator_model is not None:
@@ -220,10 +218,6 @@ class Trainer:
         # 2) Fake batch training
         # a) Generate fake articulatory data
         fake_art_seqs = self.nn.inverse_model(feat_seqs, seqs_len=seqs_len).to(self.device)
-        print("art_seqs %.2f %.2f %.2f %.2f" % (art_seqs.mean().item(), art_seqs.std().item(),
-              art_seqs.min().item(), art_seqs.max().item()))
-        print("fake_art_seqs %.2f %.2f %.2f %.2f" % (fake_art_seqs.mean().item(), fake_art_seqs.std().item(),
-              fake_art_seqs.min().item(), fake_art_seqs.max().item()))
 
         # b) Predict labels
         # We detach to only compute gradients for the discriminator and not the generator
