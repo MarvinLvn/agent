@@ -21,58 +21,58 @@ pb2009:
   lab_resolution: 10000000
 
 heldout:
-  wav_pathname: /home/engaclew/agent/datasets/heldout/*/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/heldout/*.wav
   audio_only: true
 
 test:
-  wav_pathname: /home/engaclew/agent/datasets/test/*/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/test/*.wav
   audio_only: true
 
 M0_10_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_10_mn/wav/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/M0_10_mn/*.wav
   audio_only: true
 
 M0_60_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_60_mn/wav/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/M0_60_mn/*.wav
   audio_only: true
 
 M0_600_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_600_mn/wav/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/M0_600_mn/*.wav
   audio_only: true
 
 M0_6000_mn:
-  wav_pathname: /home/engaclew/agent/datasets/M0_6000_mn/wav/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/M0_6000_mn/*.wav
   audio_only: true
 
 2_speakers_6000_mn:
-  wav_pathname: /home/engaclew/agent/datasets/2_speakers_6000_mn/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/2_speakers_6000_mn/*.wav
   audio_only: true
 
 4_speakers_6000_mn:
-  wav_pathname: /home/engaclew/agent/datasets/4_speakers_6000_mn/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/4_speakers_6000_mn/*.wav
   audio_only: true
 
 8_speakers_6000_mn:
-  wav_pathname: /home/engaclew/agent/datasets/8_speakers_6000_mn/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/8_speakers_6000_mn/*.wav
   audio_only: true
 
 librispeech_10_mn:
-  wav_pathname: /home/engaclew/agent/datasets/librispeech_10_mn/*.wav
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/librispeech_10_mn/*.wav
   wav_rms_reference: pb2007
   audio_only: true
 
 librispeech_60_mn:
-   wav_pathname: /home/engaclew/agent/datasets/librispeech_60_mn/*.wav
+   wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/librispeech_60_mn/*.wav
    wav_rms_reference: pb2007
    audio_only: true
 
 librispeech_600_mn:
-   wav_pathname: /home/engaclew/agent/datasets/librispeech_600_mn/*.wav
+   wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/librispeech_600_mn/*.wav
    wav_rms_reference: pb2007
    audio_only: true
 
 librispeech_6000_mn:
-   wav_pathname: /home/engaclew/agent/datasets/librispeech_6000_mn/*.wav
+   wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/librispeech_6000_mn/*.wav
    wav_rms_reference: pb2007
    audio_only: true
 
@@ -245,85 +245,85 @@ gb2016:
   phones_infos: pb2007
 
 fsew0:
-  wav_pathname: /home/engaclew/agent/datasets/fsew0/wav/*.wav
-  ema_pathname: /home/engaclew/agent/datasets/fsew0/ema/*.ema
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/fsew0/wav/*.wav
+  ema_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/fsew0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17]
   ema_needs_lowpass: true
-  lab_pathname: /home/engaclew/agent/datasets/fsew0/lab/*.lab
+  lab_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/fsew0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha
 
 msak0:
-  wav_pathname: /home/engaclew/agent/datasets/msak0/wav/*.wav
-  ema_pathname: /home/engaclew/agent/datasets/msak0/ema/*.ema
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/msak0/wav/*.wav
+  ema_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/msak0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17]
   ema_needs_lowpass: true
-  lab_pathname: /home/engaclew/agent/datasets/msak0/lab/*.lab
+  lab_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/msak0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha
 
 fjmw0:
-  wav_pathname: /home/engaclew/agent/datasets/fjmw0/wav/*.wav
-  ema_pathname: /home/engaclew/agent/datasets/fjmw0/ema/*.ema
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/fjmw0/wav/*.wav
+  ema_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/fjmw0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
   ema_needs_lowpass: true
-  lab_pathname: /home/engaclew/agent/datasets/fjmw0/lab/*.lab
+  lab_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/fjmw0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha
 
 falh0:
-  wav_pathname: /home/engaclew/agent/datasets/falh0/wav/*.wav
-  ema_pathname: /home/engaclew/agent/datasets/falh0/ema/*.ema
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/falh0/wav/*.wav
+  ema_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/falh0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
   ema_needs_lowpass: true
-  lab_pathname: /home/engaclew/agent/datasets/falh0/lab/*.lab
+  lab_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/falh0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha
 
 mjjn0:
-  wav_pathname: /home/engaclew/agent/datasets/mjjn0/wav/*.wav
-  ema_pathname: /home/engaclew/agent/datasets/mjjn0/ema/*.ema
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/mjjn0/wav/*.wav
+  ema_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/mjjn0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
   ema_needs_lowpass: true
-  lab_pathname: /home/engaclew/agent/datasets/mjjn0/lab/*.lab
+  lab_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/mjjn0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha
 
 ffes0:
-  wav_pathname: /home/engaclew/agent/datasets/ffes0/wav/*.wav
-  ema_pathname: /home/engaclew/agent/datasets/ffes0/ema/*.ema
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/ffes0/wav/*.wav
+  ema_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/ffes0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
   ema_needs_lowpass: true
-  lab_pathname: /home/engaclew/agent/datasets/ffes0/lab/*.lab
+  lab_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/ffes0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha
 
 faet0:
-  wav_pathname: /home/engaclew/agent/datasets/faet0/wav/*.wav
-  ema_pathname: /home/engaclew/agent/datasets/faet0/ema/*.ema
+  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/faet0/wav/*.wav
+  ema_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/faet0/ema/*.ema
   ema_format: est
   ema_sampling_rate: 500
   ema_scaling_factor: 100
   ema_coils_order: [ 1, 6, 4, 9, 10, 15, 11, 16, 3, 8, 2, 7, 12, 17 ]
   ema_needs_lowpass: true
-  lab_pathname: /home/engaclew/agent/datasets/faet0/lab/*.lab
+  lab_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/faet0/lab/*.lab
   lab_resolution: 1
   phones_infos: mocha

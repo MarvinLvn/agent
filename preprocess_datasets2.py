@@ -230,8 +230,12 @@ def main():
     datasets_wav_rms = {}
 
     for dataset_name, dataset_infos in datasets_infos.items():
-        if dataset_name == 'pb2009': #dataset_name.startswith('M0'):
+        #if dataset_name == 'pb2009': #dataset_name.startswith('M0'):
+        #if dataset_name in ['2_speakers_6000_mn', '4_speakers_6000_mn', '8_speakers_6000_mn',
+        #                    'M0_10_mn', 'M0_60_mn', 'M0_600_mn', 'M0_6000_mn', 'heldout', 'test']:
 
+        if dataset_name in ['2_speakers_6000_mn', '4_speakers_6000_mn', '8_speakers_6000_mn',
+                            'M0_6000_mn']:
             print("Preprocessing %s..." % dataset_name)
 
             wavfiles_path = glob(dataset_infos["wav_pathname"])
@@ -246,21 +250,21 @@ def main():
             datasets_wav_rms[dataset_name] = dataset_wav_rms
             print("Computing RMS done")
 
-            # print("Resampling WAV files...")
-            # target_wav_rms = (
-            #     datasets_wav_rms[dataset_infos["wav_rms_reference"]]
-            #     if "wav_rms_reference" in dataset_infos
-            #     else None
-            # )
-            #
-            # preprocess_wav(
-            #     dataset_name,
-            #     dataset_infos["wav_pathname"],
-            #     features_config["wav_sampling_rate"],
-            #     dataset_wav_rms,
-            #     target_wav_rms,
-            # )
-            # print("Resampling WAV files done")
+            print("Resampling WAV files...")
+            target_wav_rms = (
+                datasets_wav_rms[dataset_infos["wav_rms_reference"]]
+                if "wav_rms_reference" in dataset_infos
+                else None
+            )
+
+            preprocess_wav(
+                dataset_name,
+                dataset_infos["wav_pathname"],
+                features_config["wav_sampling_rate"],
+                dataset_wav_rms,
+                target_wav_rms,
+            )
+            print("Resampling WAV files done")
 
             print("Extracting source & mel-spectrograms...")
             tgt_lengths = extract_source_and_mel(dataset_name, format=format)

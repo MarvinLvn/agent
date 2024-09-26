@@ -77,10 +77,27 @@ def get_dataloaders(dataset_config, datasplits, cut_silences=True, max_len=None)
         split_source_seqs = [torch.FloatTensor(split_source_seq) for split_source_seq in split_source_seqs]
 
         if max_len is not None:
-            split_sound_seqs = [sub_seg for seg in split_sound_seqs for sub_seg in torch.split(seg, max_len)]
-            nb_frames_source = dataset.features_config['wav_sampling_rate'] // dataset.features_config['ema_sampling_rate']
-            split_source_seqs = [sub_seg for seg in split_source_seqs for sub_seg in torch.split(seg, max_len//nb_frames_source)]
+            #split_sound_seqs = [sub_seg for seg in split_sound_seqs for sub_seg in torch.split(seg, max_len)]
+            #nb_frames_source = dataset.features_config['wav_sampling_rate'] // dataset.features_config['ema_sampling_rate']
+            #split_source_seqs = [sub_seg for seg in split_source_seqs for sub_seg in torch.split(seg, max_len // nb_frames_source)]
+            # 2 frames = 40 ms
+            min_length = 2
+            nb_frames_source = dataset.features_config['wav_sampling_rate'] // dataset.features_config[
+                'ema_sampling_rate']
+            split_source_with_index = [
+                (sub_seg, (i, j))
+                for i, seg in enumerate(split_source_seqs)
+                for j, sub_seg in enumerate(torch.split(seg, max_len // nb_frames_source))
+                if sub_seg.shape[0] > min_length
+            ]
+            split_source_seqs, valid_indexes = map(list, zip(*split_source_with_index))
 
+            split_sound_seqs = [
+                sub_seg
+                for i, seg in enumerate(split_sound_seqs)
+                for j, sub_seg in enumerate(torch.split(seg, max_len))
+                if (i, j) in valid_indexes
+            ]
         # Zero mean, unit variance normalization
         split_sound_seqs = [(seg - seg.mean()) / seg.std() for seg in split_sound_seqs]
 
