@@ -124,7 +124,7 @@ class SSLAgent(BaseAgent):
         bce_loss = torch.nn.BCELoss()
 
         def inverse_model_loss(sound_seqs_pred, sound_seqs, seqs_mask, predicted_labels):
-            reconstruction_loss = mse(sound_seqs_pred, sound_seqs, seqs_mask)
+            reconstruction_loss = cosine_distance(sound_seqs_pred, sound_seqs, seqs_mask)
 
             total_loss = reconstruction_loss
             # Fake labels are real for the generator
@@ -134,11 +134,6 @@ class SSLAgent(BaseAgent):
                 fool_discrimination_loss = bce_loss(predicted_labels, real_labels)
                 total_loss += fool_discrimination_loss * self.config["training"]["discriminator_loss_weight"]
             return total_loss, reconstruction_loss, fool_discrimination_loss
-
-        def mse(seqs_pred, seqs, seqs_mask):
-            reconstruction_error = (seqs_pred - seqs) ** 2
-            reconstruction_loss = reconstruction_error[seqs_mask].mean()
-            return reconstruction_loss
 
         def bce(predicted_labels, real_labels):
             return bce_loss(predicted_labels, real_labels)
@@ -157,7 +152,7 @@ class SSLAgent(BaseAgent):
                 mean_distance = torch.tensor(0.0, device=feat_seqs.device)
             return mean_distance
 
-        return {"inverse_loss": inverse_model_loss, "mse": mse, "bce": bce, "cosine": cosine_distance}
+        return {"inverse_loss": inverse_model_loss, "bce": bce, "cosine": cosine_distance}
 
     def save(self, save_path):
         if isinstance(save_path, str):
