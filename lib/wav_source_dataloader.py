@@ -99,7 +99,7 @@ def get_dataloaders(dataset_config, datasplits, cut_silences=True, max_len=None)
                 if (i, j) in valid_indexes
             ]
         # Zero mean, unit variance normalization
-        split_sound_seqs = [(seg - seg.mean()) / seg.std() for seg in split_sound_seqs]
+        split_sound_seqs = [(seg - seg.mean()) / (seg.std() + 1e-8) for seg in split_sound_seqs]
 
         split_dataloader = torch.utils.data.DataLoader(
             SoundSourceDataset(split_sound_seqs, split_source_seqs),
