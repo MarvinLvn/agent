@@ -1,5 +1,5 @@
 from contextlib import nullcontext
-
+import numpy as np
 import torch
 from tqdm import tqdm
 from lib.early_stopping import EarlyStopping
@@ -18,7 +18,7 @@ class Trainer:
         losses_fn,
         max_epoch,
         patience,
-        checkpoint_path,
+        save_path,
         discriminator_nb_frames=1,
         device="cpu",
     ):
@@ -42,44 +42,49 @@ class Trainer:
         self.train_artloader, self.validation_artloader, self.test_artloader = None, None, None
         if self.nn.discriminator_model is not None:
             self.train_artloader, self.validation_artloader, self.test_artloader = self.nn.synthesizer.get_dataloaders(fit=True, transform=True)
-        self.checkpoint_path = checkpoint_path
+        self.save_path = save_path
         self.discriminator_nb_frames = discriminator_nb_frames
         self.device = device
 
-    def train(self):
-        training_record = TrainingRecord()
-        self.train_model_part(
-            training_record, self.epoch_inverse_model, "inverse_loss"
-        )
-        return training_record.record
+        # Training management
+        self.training_record = TrainingRecord()
+        self.early_stopping = EarlyStopping(patience=self.patience, verbose=True,
+                                            path=self.save_path / 'best_model.pt')
 
-    def train_model_part(self, training_record, epoch_fn, early_stopping_metric):
-        early_stopping = EarlyStopping(
-            patience=self.patience, verbose=True, path=self.checkpoint_path
-        )
+    def train(self, resume=False):
+        if resume:
+            self.load_checkpoint(self.save_path / "last_checkpoint.pt")
+            self.early_stopping.load_early_stopping_state(self.training_record, 'inverse_loss')
 
-        for epoch in range(1, self.max_epoch + 1):
-            print("== Epoch %s ==" % epoch)
-            train_metrics = epoch_fn(self.train_dataloader, self.train_artloader, training_record, regime='train')
-            training_record.save_epoch_metrics("train", train_metrics)
+        for epoch in range(self.training_record.current_epoch + 1, self.max_epoch + 1):
+            print(f"== Epoch {epoch} ==")
 
-            validation_metrics = epoch_fn(self.validation_dataloader, self.validation_artloader, training_record, regime='val')
-            training_record.save_epoch_metrics("validation", validation_metrics)
-            if self.test_dataloader is not None:
-                test_metrics = epoch_fn(self.test_dataloader, self.test_artloader, training_record, regime='test')
-                training_record.save_epoch_metrics("test", test_metrics)
+            train_metrics = self.epoch_inverse_model(self.train_dataloader, self.train_artloader, regime='train')
+            self.training_record.save_epoch_metrics("train", train_metrics)
 
-            if len(validation_metrics.metrics) != 0:
-                early_stopping(validation_metrics.metrics[early_stopping_metric], self.nn)
-            if early_stopping.early_stop:
+            validation_metrics = self.epoch_inverse_model(self.validation_dataloader, self.validation_artloader, regime='val')
+            self.training_record.save_epoch_metrics("validation", validation_metrics)
+
+            if self.test_dataloader:
+                test_metrics = self.epoch_inverse_model(self.test_dataloader, self.test_artloader, regime='test')
+                self.training_record.save_epoch_metrics("test", test_metrics)
+
+            if validation_metrics.metrics:
+                # EarlyStopping will handle saving the best model
+                self.early_stopping(validation_metrics.metrics['inverse_loss'], self.nn)
+
+            self.training_record.current_epoch = epoch
+            self.save_checkpoint(self.save_path / "last_checkpoint.pt")
+
+            if self.early_stopping.early_stop:
                 print("Early stopping")
                 break
-            else:
-                print()
 
-        self.nn.load_state_dict(torch.load(self.checkpoint_path))
+        # Load the best model at the end of training
+        self.nn.load_state_dict(torch.load(self.save_path / 'best_model.pt'))
+        return self.training_record.record
 
-    def epoch_inverse_model(self, dataloader, art_loader, training_record, regime):
+    def epoch_inverse_model(self, dataloader, art_loader, regime):
         assert regime in ['train', 'val', 'test']
         is_training = regime == 'train'
         nb_batch = len(dataloader)
@@ -134,7 +139,7 @@ class Trainer:
                                             epoch_record=epoch_record,
                                             regime=regime)
 
-                training_record.save_epoch_metrics(f'{regime}_step', epoch_record, print=False)
+                self.training_record.save_epoch_metrics(f'{regime}_step', epoch_record, print=False)
 
         return epoch_record
 
@@ -251,4 +256,21 @@ class Trainer:
         new_mask = art_seqs_mask[:, :nb_windows]
         unfolded_art = unfolded_art[new_mask].transpose(1, 2)
         return unfolded_art
+
+    def save_checkpoint(self, checkpoint_path):
+        checkpoint = {
+            'model_state_dict': self.nn.state_dict(),
+            'optimizer_state_dict': {name: opt.state_dict() for name, opt in self.optimizers.items()},
+            'training_record': self.training_record.record,
+            'current_epoch': self.training_record.current_epoch
+        }
+        torch.save(checkpoint, str(checkpoint_path))
+
+    def load_checkpoint(self, checkpoint_path):
+        checkpoint = torch.load(str(checkpoint_path))
+        self.nn.load_state_dict(checkpoint['model_state_dict'])
+        for name, opt in self.optimizers.items():
+            opt.load_state_dict(checkpoint['optimizer_state_dict'][name])
+        self.training_record.record = checkpoint['training_record']
+        self.training_record.current_epoch = checkpoint['current_epoch']
 

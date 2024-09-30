@@ -13,7 +13,6 @@ AGENT_PATH = Path(__file__).parent.resolve() / "../out/ssl_agent"
 def main(argv):
     # 0. Read config
     args = parse_args(argv)
-
     if args.config_file is not None:
         config = utils.read_yaml_file(args.config_file)
     else:
@@ -31,6 +30,8 @@ def main(argv):
     if (save_path / 'nn_weights.pt').is_file():
         print("Already done")
         exit()
+
+    resume_training = (save_path / "last_checkpoint.pt").exists()
 
     dataloaders = agent.get_dataloaders()
     optimizers = agent.get_optimizers()
@@ -50,13 +51,13 @@ def main(argv):
         losses_fn=losses_fn,
         max_epoch=config["training"]["max_epochs"],
         patience=config["training"]["patience"],
-        checkpoint_path=save_path / "checkpoint.pt",
+        save_path=save_path,
         discriminator_nb_frames=discriminator_nb_frames,
         device=args.device,
     )
 
     start_time = time.time()
-    metrics_record = trainer.train()
+    metrics_record = trainer.train(resume=resume_training)
     end_time = time.time()
     hours, rem = divmod(end_time - start_time, 3600)
     minutes, seconds = divmod(rem, 60)
@@ -65,6 +66,8 @@ def main(argv):
     agent.save(save_path)
     with open(save_path / "metrics.pickle", "wb") as f:
         pickle.dump(metrics_record, f)
+    (save_path / 'best_model.pt').unlink()
+    (save_path / 'last_checkpoint.pt').unlink()
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(description='Trainer')

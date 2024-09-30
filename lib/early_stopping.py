@@ -8,7 +8,7 @@ class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
 
     def __init__(
-        self, patience=7, verbose=False, delta=0, path="checkpoint.pt", trace_func=print
+        self, patience=7, verbose=False, delta=0, path="checkpoint.pt", trace_func=print, init_val_loss=None
     ):
         """
         Args:
@@ -29,6 +29,9 @@ class EarlyStopping:
         self.best_score = None
         self.early_stop = False
         self.val_loss_min = np.Inf
+        if init_val_loss is not None:
+            self.best_score = -init_val_loss
+            self.val_loss_min = init_val_loss
         self.delta = delta
         self.path = path
         self.trace_func = trace_func
@@ -39,7 +42,7 @@ class EarlyStopping:
 
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(val_loss, model)
+            self.save_model_checkpoint(val_loss, model)
         elif score < self.best_score + self.delta:
             self.counter += 1
             self.trace_func(
@@ -49,10 +52,10 @@ class EarlyStopping:
                 self.early_stop = True
         else:
             self.best_score = score
-            self.save_checkpoint(val_loss, model)
+            self.save_model_checkpoint(val_loss, model)
             self.counter = 0
 
-    def save_checkpoint(self, val_loss, model):
+    def save_model_checkpoint(self, val_loss, model):
         """Saves model when validation loss decrease."""
         if self.verbose:
             self.trace_func(
@@ -60,3 +63,10 @@ class EarlyStopping:
             )
         torch.save(model.state_dict(), self.path)
         self.val_loss_min = val_loss
+
+    def load_early_stopping_state(self, training_record, loss_key):
+        loss_values = training_record.record['validation'][loss_key]
+        min_idx = np.argmin(loss_values)
+        self.val_loss_min = loss_values[min_idx]
+        self.best_score = -self.val_loss_min
+        self.counter = len(loss_values) - min_idx
