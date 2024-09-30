@@ -1,6 +1,8 @@
+import json
 class TrainingRecord:
     def __init__(self):
         self.record = {}
+        self.current_epoch = 0
 
     def save_epoch_metrics(self, epoch_step, epoch_metrics, print=True):
         if epoch_step not in self.record:
@@ -11,6 +13,20 @@ class TrainingRecord:
             self.record[epoch_step][metric_name].append(metric_value)
         if print:
             self.log_metrics(epoch_step, epoch_metrics)
+
+    def save_checkpoint(self, path):
+        checkpoint = {
+            'record': self.record,
+            'current_epoch': self.current_epoch
+        }
+        with open(path, 'w') as f:
+            json.dump(checkpoint, f)
+
+    def load_checkpoint(self, path):
+        with open(path, 'r') as f:
+            checkpoint = json.load(f)
+        self.record = checkpoint['record']
+        self.current_epoch = checkpoint['current_epoch']
 
     def log_metrics(self, epoch_step, epoch_metrics):
         print(epoch_step)
