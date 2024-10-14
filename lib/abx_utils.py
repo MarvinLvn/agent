@@ -40,10 +40,11 @@ def get_datasets_phones_indexes(datasets_items_lab, phones, contexts):
                 ):
                     phone_label = item_lab[i + 1]
                     phone_name = phone_label["name"]
-                    phone_index = slice(phone_label["start"], phone_label["end"])
-                    phones_indexes[phone_name].append(
-                        (dataset_name, item_name, phone_index)
-                    )
+                    if phone_label['end'] - phone_label['start'] > 0:
+                        phone_index = slice(phone_label["start"], phone_label["end"])
+                        phones_indexes[phone_name].append(
+                            (dataset_name, item_name, phone_index)
+                        )
 
     return phones_indexes
 
