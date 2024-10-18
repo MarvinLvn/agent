@@ -60,7 +60,7 @@ class SSLAgent(BaseAgent):
 
         # 5) We move everything to the right device
         self.nn.to(device)
-        self.MAX_LEN = 16_000 * 10 # to avoid OOM during inference
+        self.MAX_LEN = 16_000 * 2 # to avoid OOM during inference
         self.FRAME_DUR = 320 # number of audio frames in a source or wav2vec 2.0 frame
 
 
@@ -182,60 +182,7 @@ class SSLAgent(BaseAgent):
 
         return agent
 
-
-    def repeat_long(self, sound_seq, source_seq, device='cuda'):
-        duration = sound_seq.shape[0]
-        duration_source = source_seq.shape[0]
-        num_chunks = duration // self.MAX_LEN + 1
-
-        keys = ['feat_seq', 'art_estimated', 'feat_seq_repeated', 'mel_spec_repeated', 'audio_seq_repeated']
-        out = {key: [] for key in keys}
-
-        for i in range(num_chunks):
-            start_sound = i * self.MAX_LEN
-            end_sound = np.min([start_sound + self.MAX_LEN, duration])
-            start_source = i * self.MAX_LEN // self.FRAME_DUR
-            end_source = np.min([start_source + self.MAX_LEN // self.FRAME_DUR, duration_source])
-            sound_subseq = torch.FloatTensor(sound_seq[start_sound:end_sound]).to(device)
-            source_subseq = torch.FloatTensor(source_seq[start_source:end_source, :]).to(device)
-            sound_subseq = sound_subseq[None, :]
-            source_subseq = source_subseq[None, :]
-            with torch.no_grad():
-                # 1) Extract representations
-                feat_seq, _, _ = self.feature_extractor(sound_subseq)
-                expected_nb_frames = (end_sound - start_sound) // self.FRAME_DUR
-                if end_sound != duration:
-                    feat_seq = feat_seq[:, :expected_nb_frames, :]
-
-                # 2) Run inverse model
-                art_seq_estimated = self.nn(feat_seq)
-
-                # 3) Run synthesizer
-                source_subseq = torch.nn.functional.interpolate(source_subseq.permute(0, 2, 1),
-                                                                size=art_seq_estimated.shape[1]).permute(0, 2, 1)
-                art_source_seq_estimated = torch.cat((art_seq_estimated, source_subseq), dim=2).to(device)
-                mel_spec_repeated = self.synthesizer.nn(art_source_seq_estimated)
-                mel_spec_repeated = self.synthesizer.sound_scaler_diff.inverse_transform(mel_spec_repeated)
-
-                # 4) Run vocoder
-                audio_seq_repeated = self.vocoder.resynth(mel_spec_repeated.permute(0, 2, 1))
-
-                # 5) Re-extract representations
-                feat_seq_repeated, _, _ = self.feature_extractor(audio_seq_repeated)
-
-                min_len = min(feat_seq.shape[1], feat_seq_repeated.shape[1])
-                feat_seq = feat_seq[:, :min_len, :]
-                feat_seq_repeated = feat_seq_repeated[:, :min_len, :]
-                out['feat_seq'].append(feat_seq[0].cpu().numpy())
-                out['art_estimated'].append(art_seq_estimated[0].cpu().numpy())
-                out['feat_seq_repeated'].append(feat_seq_repeated[0].cpu().numpy())
-                out['mel_spec_repeated'].append(mel_spec_repeated[0].cpu().numpy())
-                out['audio_seq_repeated'].append(audio_seq_repeated[0].cpu().numpy())
-        for key in keys:
-            out[key] = np.concatenate(out[key], axis=0)
-        return out
-
-    def repeat(self, sound_seq, source_seq, device='cuda'):
+    def repeat(self, sound_seq, source_seq, device='cuda', lightweight=False):
         sound_seq = torch.FloatTensor(sound_seq).to(device)
         sound_seq = sound_seq[None, :]
         source_seq = torch.FloatTensor(source_seq).to(device)
@@ -245,6 +192,12 @@ class SSLAgent(BaseAgent):
             feat_seq, _, _ = self.feature_extractor(sound_seq)
             # 2) Run inverse model
             art_seq_estimated = self.nn(feat_seq)
+
+            if lightweight:
+                return {
+                    "feat_seq": feat_seq[0].cpu().numpy(),
+                    "art_estimated": art_seq_estimated[0].cpu().numpy(),
+                }
 
             # 3) Run synthesizer
             source_seq = torch.nn.functional.interpolate(source_seq.permute(0, 2, 1),
@@ -259,18 +212,17 @@ class SSLAgent(BaseAgent):
             # 5) Re-extract representations
             feat_seq_repeated, _, _ = self.feature_extractor(audio_seq_repeated)
 
-        min_len = min(feat_seq.shape[1], feat_seq_repeated.shape[1])
-        feat_seq = feat_seq[:, :min_len, :]
-        feat_seq_repeated = feat_seq_repeated[:, :min_len, :]
-        out = {
-            "feat_seq": feat_seq[0].cpu().numpy(),
-            "art_estimated": art_seq_estimated[0].cpu().numpy(),
-            "feat_seq_repeated": feat_seq_repeated[0].cpu().numpy(),
-            "mel_spec_repeated": mel_spec_repeated[0].cpu().numpy(),
-            "audio_seq_repeated": audio_seq_repeated[0].cpu().numpy()
-        }
-        
-        return out
+            min_len = min(feat_seq.shape[1], feat_seq_repeated.shape[1])
+            feat_seq = feat_seq[:, :min_len, :]
+            feat_seq_repeated = feat_seq_repeated[:, :min_len, :]
+
+            return {
+                "feat_seq": feat_seq[0].cpu().numpy(),
+                "art_estimated": art_seq_estimated[0].cpu().numpy(),
+                "feat_seq_repeated": feat_seq_repeated[0].cpu().numpy(),
+                "mel_spec_repeated": mel_spec_repeated[0].cpu().numpy(),
+                "audio_seq_repeated": audio_seq_repeated[0].cpu().numpy()
+            }
 
     # Should be moved to BaseAgent once Imitative and Communicative Agent will be removed
     def get_main_dataset(self):
@@ -292,7 +244,7 @@ class SSLAgent(BaseAgent):
         datasplit_lab[dataset_name] = dataset_lab
         return datasplit_lab
 
-    def repeat_datasplit(self, datasplit_index=None, cut_long=False):
+    def repeat_datasplit(self, datasplit_index=None, cut_long=False, device='cuda'):
         agent_features = {}
         sound_type = self.config["dataset"]["sound_type"]
         dataset_name = self.config["dataset"]["name"]
@@ -313,9 +265,9 @@ class SSLAgent(BaseAgent):
             item_sound = items_sound[item_name]
             item_source = items_source[item_name]
             if cut_long:
-                repetition = self.repeat_long(item_sound, item_source)
+                repetition = self.repeat_lightweight(item_sound, item_source, device=device)
             else:
-                repetition = self.repeat(item_sound, item_source)
+                repetition = self.repeat(item_sound, item_source, device=device)
             for repetition_type, repetition_data in repetition.items():
                 if repetition_type not in dataset_features:
                     dataset_features[repetition_type] = {}
