@@ -244,7 +244,7 @@ class SSLAgent(BaseAgent):
         datasplit_lab[dataset_name] = dataset_lab
         return datasplit_lab
 
-    def repeat_datasplit(self, datasplit_index=None, cut_long=False, device='cuda'):
+    def repeat_datasplit(self, datasplit_index=None, lightweight=False, device='cuda'):
         agent_features = {}
         sound_type = self.config["dataset"]["sound_type"]
         dataset_name = self.config["dataset"]["name"]
@@ -264,10 +264,7 @@ class SSLAgent(BaseAgent):
         for item_name in items_name:
             item_sound = items_sound[item_name]
             item_source = items_source[item_name]
-            if cut_long:
-                repetition = self.repeat_lightweight(item_sound, item_source, device=device)
-            else:
-                repetition = self.repeat(item_sound, item_source, device=device)
+            repetition = self.repeat(item_sound, item_source, device=device, lightweight=lightweight)
             for repetition_type, repetition_data in repetition.items():
                 if repetition_type not in dataset_features:
                     dataset_features[repetition_type] = {}
