@@ -18,8 +18,9 @@ import numpy as np
 
 # Notes:
 # On oberon I had to run:
-#export LD_LIBRARY_PATH="/home/mlavechin/.conda/envs/whisperx/lib:$LD_LIBRARY_PATH"
-#export PHONEMIZER_ESPEAK_LIBRARY=/shared/apps/espeak-ng/lib/libespeak-ng.so
+# module load espeak-ng
+# export LD_LIBRARY_PATH="/home/mlavechin/.conda/envs/whisperx/lib:$LD_LIBRARY_PATH"
+# export PHONEMIZER_ESPEAK_LIBRARY=/shared/apps/espeak-ng/lib/libespeak-ng.so
 
 # Usage example:
 # python apply_whisper.py --data_path /scratch1/projects/MarvinTmp/audiocite_prepared/test --device cuda --save_dir $SCRATCH/whisper_models

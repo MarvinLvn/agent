@@ -21,12 +21,10 @@ pb2009:
   lab_resolution: 10000000
 
 heldout:
-  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/heldout/*.wav
-  audio_only: true
+  wav_pathname: /home/engaclew/agent/datasets/heldout/wav/*.wav
 
 test:
-  wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/test/*.wav
-  audio_only: true
+  wav_pathname: /home/engaclew/agent/datasets/test/wav/*.wav
 
 M0_10_mn:
   wav_pathname: /scratch2/mlavechin/GIPSA/agent/datasets/M0_10_mn/*.wav

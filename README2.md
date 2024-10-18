@@ -86,7 +86,8 @@ mfa align /home/engaclew/agent/datasets/heldout/MFA french_mfa french_mfa /home/
 # Superb
 
 Probing on the phone recognition and speaker identification tasks were done using the [superb benchmark](https://github.com/s3prl/s3prl/tree/main).
-Instructions for data downloading/preparation can be found [here](https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/docs/superb.md#sid-speaker-identification).
+Instructions for data downloading/preparation can be found [here](https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/docs/superb.md#sid-speaker-identification). 
+We'll only need librispeech train-clean-100, dev-clean, test-clean.
 
 1) Install
 ```sh
@@ -113,7 +114,9 @@ python run_downstream.py -m evaluate -e result/downstream/w2v_PR_layer_0/dev-bes
 4) Train (speaker identification)
 
 ```sh
-python run_downstream.py -m train -u hf_wav2vec2_custom -d voxceleb1 -k facebook/wav2vec2-base-10k-voxpopuli -n w2v_SID_layer_0 -s hidden_states -l 0
+# Bucketing for faster training (train-clean-100, dev-clean, test-clean)
+python preprocess/generate_len_for_bucket.py -i /scratch2/mlavechin/ContrastivePredictiveCodingPaper/DATA/LibriSpeech_corpus/LibriSpeech
+python run_downstream.py -m train -u hf_wav2vec2_custom -d speaker_linear_frame_libri -k facebook/wav2vec2-base-10k-voxpopuli -n w2v_SID_layer_0 -s hidden_states -l 0
 ```
 
 5) Test (speaker identification)

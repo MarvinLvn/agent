@@ -9,7 +9,7 @@ from lib.nn.data_scaler import DataScaler
 from lib.dataset_wrapper import Dataset
 
 from inverse_model.inverse_model import InverseModel
-from ssl_agent_nn import SSLAgentNN
+from ssl_agent.ssl_agent_nn import SSLAgentNN
 from synthesizer.synthesizer import Synthesizer
 from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
 from feature_extractor.mfcc_extractor import MFCCExtractor
@@ -223,6 +223,7 @@ class SSLAgent(BaseAgent):
 
         dataset = self.get_main_dataset()
         dataset_name = self.config["dataset"]["name"]
+
         if datasplit_index is None:
             dataset_lab = dataset.lab
         else:
@@ -241,9 +242,38 @@ class SSLAgent(BaseAgent):
 
         dataset = Dataset(dataset_name)
         if datasplit_index is None:
-            items_name = dataset.get_items_name(sound_type)
+            items_name = dataset.get_items_name(sound_type, format='.wav')
         else:
             items_name = self.datasplits[datasplit_index]
+
+        fmt = '.npy'
+        if self.config["dataset"]["sound_type"] == 'wav':
+            fmt = '.wav'
+        items_sound = dataset.get_items_data(self.config["dataset"]["sound_type"], format=fmt)
+        items_source = dataset.get_items_data(self.config["dataset"]["source_type"], format='.npy')
+        for item_name in items_name:
+            item_sound = items_sound[item_name]
+            item_source = items_source[item_name]
+            repetition = self.repeat(item_sound, item_source)
+            for repetition_type, repetition_data in repetition.items():
+                if repetition_type not in dataset_features:
+                    dataset_features[repetition_type] = {}
+                dataset_features[repetition_type][item_name] = repetition_data
+
+        agent_features[dataset_name] = dataset_features
+        return agent_features
+
+    def repeat_datasplit_debug(self, datasplit_index=None):
+        agent_features = {}
+        sound_type = self.config["dataset"]["sound_type"]
+        dataset_name = self.config["dataset"]["name"]
+        dataset_features = {}
+
+        dataset = Dataset(dataset_name)
+        if datasplit_index is None:
+            items_name = dataset.get_items_name(sound_type, format='.wav')[:100]
+        else:
+            items_name = self.datasplits[datasplit_index][:100]
 
         fmt = '.npy'
         if self.config["dataset"]["sound_type"] == 'wav':
