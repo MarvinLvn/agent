@@ -10,7 +10,7 @@ from lib.nn.data_scaler import DataScaler
 from lib.dataset_wrapper import Dataset
 
 from inverse_model.inverse_model import InverseModel
-from ssl_agent.ssl_agent_nn import SSLAgentNN
+from ssl_agent_nn import SSLAgentNN
 from synthesizer.synthesizer import Synthesizer
 from feature_extractor.wav2vec_extractor import Wav2Vec2Extractor
 from feature_extractor.mfcc_extractor import MFCCExtractor
