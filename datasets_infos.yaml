@@ -23,6 +23,9 @@ pb2009:
 heldout:
   wav_pathname: /home/engaclew/agent/datasets/heldout/wav/*.wav
 
+heldout_full:
+  wav_pathname: /home/engaclew/agent/datasets/heldout_fu/wav/*.wav
+
 test:
   wav_pathname: /home/engaclew/agent/datasets/test/wav/*.wav
 

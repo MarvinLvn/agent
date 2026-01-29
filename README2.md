@@ -3,27 +3,17 @@
 ```sh
 conda create --name agent python=3.8 && conda activate agent
 
-# 1. Install hifi-gan dependencies
-cd hifi-gan
-pip install -e .
-
-# 2. Install dependencies
-cd ..
-conda env update -f env.yml 
-```
-
-```sh
-# Install this repo
+# 1. Install this repo
 git clone https://github.com/MarvinLvn/agent
 cd agent
-conda create --name agent python=3.8 && conda activate agent
-pip install -r requirements.txt
+conda env create -f env.yml
 
-# Install hifi-gan dependency
+# 2. Install hifi-gan dependency
 git clone https://github.com/MarvinLvn/hifi-gan
 cd hifi-gan
 pip install -e .
 ```
+
 
 ### Datasets
 
@@ -83,7 +73,7 @@ Now we can align:
 mfa align /home/engaclew/agent/datasets/heldout/MFA french_mfa french_mfa /home/engaclew/agent/datasets/heldout/MFA_aligned
 ```
 
-# Superb
+# How to evaluate on SUPERB? 
 
 Probing on the phone recognition and speaker identification tasks were done using the [superb benchmark](https://github.com/s3prl/s3prl/tree/main).
 Instructions for data downloading/preparation can be found [here](https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/docs/superb.md#sid-speaker-identification). 
@@ -123,4 +113,16 @@ python run_downstream.py -m train -u hf_wav2vec2_custom -d speaker_linear_frame_
 
 ```sh
 python run_downstream.py -m evaluate -e result/downstream/w2v_SID_layer_0/dev-best.ckpt
+```
+
+# 4) Reference
+
+```text
+@inproceedings{lavechin2025perception,
+  title={From perception to production: how acoustic invariance facilitates articulatory learning in a self-supervised vocal imitation model},
+  author={Lavechin, Marvin and Hueber, Thomas},
+  booktitle={Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing},
+  pages={23863--23874},
+  year={2025}
+}
 ```

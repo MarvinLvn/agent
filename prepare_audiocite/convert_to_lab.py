@@ -113,7 +113,8 @@ def clean_durations(data):
         # 2) Bring back outliers to the mean
         outliers_mask = (data['phone'] == phone) & (data['duration'] > mu + 3 * std)
         data.loc[outliers_mask, 'duration'] = mu
-
+        
+    data['end'] = data['start'] + data['duration']
     data['start'] = (data['start'] / FRAME_LENGTH).astype(int)
     data['end'] = (data['end'] / FRAME_LENGTH).astype(int)
     return data
