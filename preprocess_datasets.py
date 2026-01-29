@@ -1,18 +1,28 @@
-from glob import glob
-import librosa
-import numpy as np
-from tqdm import tqdm
-from scipy.io import wavfile
-import pickle
 import math
 import os
+import pickle
+from glob import glob
 
-from lib import utils
-from lib import art_model
+import librosa
+import numpy as np
+from meldataset import mel_spectrogram
+from scipy.io import wavfile
+from tqdm import tqdm
 from external import lpcynet
 
-INT16_MAX_VALUE = 32767
+import torch
+from lib import art_model
+from lib import utils
 
+MAX_WAV_VALUE = 32768.0
+INT16_MAX_VALUE = 32767
+H_N_FFT = 1024
+H_NUM_MELS = 80
+H_SAMPLING_RATE = 16000
+H_HOP_SIZE = 320
+H_WIN_SIZE = 640
+H_FMIN = 0
+H_FMAX = 8000
 
 def rms(y):
     return np.sqrt(np.mean((y * 1.0) ** 2))
@@ -49,7 +59,6 @@ def preprocess_wav(
     wavfiles_path = glob(wav_pathname)
     for wavfile_path in tqdm(wavfiles_path):
         pcm, wavfile_sampling_rate = librosa.load(wavfile_path, sr=None)
-
         pcm = pcm * wav_scaling_factor
         if wavfile_sampling_rate != target_sampling_rate:
             pcm = librosa.resample(pcm, wavfile_sampling_rate, target_sampling_rate)
@@ -61,30 +70,56 @@ def preprocess_wav(
             else os.path.basename(wavfile_path)
         wavfile.write("%s/%s.wav" % (export_dir, item_name), target_sampling_rate, pcm)
 
+def get_mel(x):
+    return mel_spectrogram(x, H_N_FFT, H_NUM_MELS, H_SAMPLING_RATE, H_HOP_SIZE, H_WIN_SIZE, H_FMIN, H_FMAX)
 
-def extract_cepstrum_and_source(dataset_name):
-    cepstrum_export_dir = "datasets/%s/cepstrum" % dataset_name
-    utils.mkdir(cepstrum_export_dir)
+def get_source(pcm):
+    # to avoid buffer source array is read-only
+    pcm = np.copy(pcm)
+    lpcnet_features = lpcynet.analyze_frames(pcm)
+    source = lpcnet_features[:, 18:]
+    return source
+
+def extract_source_and_mel(dataset_name, format='.bin'):
+    mel_export_dir = "datasets/%s/mel" % dataset_name
+    utils.mkdir(mel_export_dir)
     source_export_dir = "datasets/%s/source" % dataset_name
     utils.mkdir(source_export_dir)
 
     wavfiles_dir = "datasets/%s/wav" % dataset_name
     wavfiles_path = glob("%s/*.wav" % wavfiles_dir)
+    lengths = {}
     for wavfile_path in tqdm(wavfiles_path):
         item_name = utils.parse_item_name(wavfile_path)
 
         sr, pcm = wavfile.read(wavfile_path)
         assert sr == 16000
-        # if ValueError: buffer source array is read-only
-        # pcm = np.copy(pcm)
-        item_lpcnet_features = lpcynet.analyze_frames(pcm)
 
-        item_cepstrum = item_lpcnet_features[:, :18]
-        item_source = item_lpcnet_features[:, 18:]
+        audio = pcm / MAX_WAV_VALUE
+        audio = torch.FloatTensor(audio).unsqueeze(0)
+        item_mel = get_mel(audio).squeeze(0).numpy()
+        lengths[item_name] = item_mel.shape[1]
+        item_source = get_source(pcm)
+        current_length = item_source.shape[0]
+        tgt_length = item_mel.shape[1]
+        if current_length != tgt_length:
+            current_indices = np.arange(current_length)
+            target_indices = np.linspace(0, current_length - 1, tgt_length)
+            item_source = np.column_stack([
+                np.interp(target_indices, current_indices, item_source[:, i])
+                for i in range(item_source.shape[1])
+            ])
 
-        item_cepstrum.tofile("%s/%s.bin" % (cepstrum_export_dir, item_name))
-        item_source.tofile("%s/%s.bin" % (source_export_dir, item_name))
 
+        if format == '.bin':
+            item_mel.tofile("%s/%s.bin" % (mel_export_dir, item_name))
+            item_source.tofile("%s/%s.bin" % (source_export_dir, item_name))
+        elif format == '.npy':
+            np.save("%s/%s.npy" % (mel_export_dir, item_name), item_mel)
+            np.save("%s/%s.npy" % (source_export_dir, item_name), item_source)
+        else:
+            raise ValueError(f"Unknown output format for mel-spec {format}")
+    return lengths
 
 def preprocess_ema(
     dataset_name,
@@ -146,7 +181,7 @@ def preprocess_ema(
     return items_ema
 
 
-def extract_art_parameters(dataset_name, items_ema):
+def extract_art_parameters(dataset_name, items_ema, tgt_lengths, format='.bin'):
     dataset_dir = "datasets/%s" % dataset_name
 
     all_ema_frames = np.concatenate(list(items_ema.values()), axis=0)
@@ -156,10 +191,23 @@ def extract_art_parameters(dataset_name, items_ema):
 
     export_dir = "datasets/%s/art_params" % dataset_name
     utils.mkdir(export_dir)
-
-    for item_name, item_ema in tqdm(items_ema.items()):
+    for i, (item_name, item_ema) in tqdm(enumerate(items_ema.items())):
         item_art = art_model.ema_to_art(art_model_params, item_ema)
-        item_art.astype("float32").tofile("%s/%s.bin" % (export_dir, item_name))
+        current_length = item_art.shape[0]
+        tgt_length = tgt_lengths[item_name]
+        if current_length != tgt_length:
+            current_indices = np.arange(current_length)
+            target_indices = np.linspace(0, current_length - 1, tgt_length)
+            item_art = np.column_stack([
+                np.interp(target_indices, current_indices, item_art[:, i])
+                for i in range(item_art.shape[1])
+            ])
+        if format == '.bin':
+            item_art.astype("float32").tofile("%s/%s.bin" % (export_dir, item_name))
+        elif format == '.npy':
+            np.save("%s/%s.npy" % (export_dir, item_name), item_art.astype("float32"))
+        else:
+            raise ValueError(f"Unknown output format for art_params {format}")
 
 
 def preprocess_lab(dataset_name, lab_pathname, dataset_resolution, target_resolution):
@@ -178,80 +226,76 @@ def preprocess_lab(dataset_name, lab_pathname, dataset_resolution, target_resolu
 def main():
     features_config = utils.read_yaml_file("./features_config.yaml")
     datasets_infos = utils.read_yaml_file("./datasets_infos.yaml")
+    format = '.npy'
     datasets_wav_rms = {}
 
     for dataset_name, dataset_infos in datasets_infos.items():
-        if dataset_name == 'pb2009':
 
-            print("Preprocessing %s..." % dataset_name)
+        print("Preprocessing %s..." % dataset_name)
 
-            wavfiles_path = glob(dataset_infos["wav_pathname"])
+        wavfiles_path = glob(dataset_infos["wav_pathname"])
 
-            if len(wavfiles_path) == 0:
-                print("Dataset %s not found" % dataset_name)
-                print("")
-                continue
-
-            print("Computing RMS...")
-            dataset_wav_rms = compute_wav_rms(dataset_infos["wav_pathname"])
-            datasets_wav_rms[dataset_name] = dataset_wav_rms
-            print("Computing RMS done")
-
-            print("Resampling WAV files...")
-            # target_wav_rms = (
-            #     datasets_wav_rms[dataset_infos["wav_rms_reference"]]
-            #     if "wav_rms_reference" in dataset_infos
-            #     else None
-            # )
-            #
-            # preprocess_wav(
-            #     dataset_name,
-            #     dataset_infos["wav_pathname"],
-            #     features_config["wav_sampling_rate"],
-            #     dataset_wav_rms,
-            #     target_wav_rms,
-            # )
-            print("Resampling WAV files done")
-
-            print("Extracting cepstrograms and source parameters...")
-            extract_cepstrum_and_source(dataset_name)
-            print("Extracting cepstrograms and source parameters done")
-
-            if "ema_pathname" in dataset_infos:
-                frames_sampling_rate = features_config["ema_sampling_rate"]
-
-                print("Preprocessing EMA...")
-                items_ema = preprocess_ema(
-                    dataset_name,
-                    dataset_infos["ema_pathname"],
-                    dataset_infos["ema_format"],
-                    dataset_infos["ema_sampling_rate"],
-                    dataset_infos["ema_scaling_factor"],
-                    dataset_infos["ema_coils_order"],
-                    dataset_infos["ema_needs_lowpass"],
-                    frames_sampling_rate,
-                )
-                print("Preprocessing EMA done")
-
-                print("Extracting articulatory model and parameters...")
-                extract_art_parameters(dataset_name, items_ema)
-                print("Extracting articulatory model and parameters done")
-            if "lab_pathname" in dataset_infos:
-                print("Resampling LAB files...")
-                preprocess_lab(
-                    dataset_name,
-                    dataset_infos["lab_pathname"],
-                    dataset_infos["lab_resolution"],
-                    frames_sampling_rate,
-                )
-                print("Resampling LAB files done")
-
-            print("Preprocessing %s done" % dataset_name)
+        if len(wavfiles_path) == 0:
+            print("Dataset %s not found" % dataset_name)
             print("")
+            continue
 
-            # TODO: add the palate importation
-            # it should be placed in a palate.bin file placed at the root of the ./datasets/DATASET_NAME folder
-            # it should be a float32 numpy array of shape (point_number, 2) saved with array.tofile
+        print("Computing RMS...")
+        dataset_wav_rms = compute_wav_rms(dataset_infos["wav_pathname"])
+        datasets_wav_rms[dataset_name] = dataset_wav_rms
+        print("Computing RMS done")
+
+        print("Resampling WAV files...")
+        target_wav_rms = (
+            datasets_wav_rms[dataset_infos["wav_rms_reference"]]
+            if "wav_rms_reference" in dataset_infos
+            else None
+        )
+
+        preprocess_wav(
+            dataset_name,
+            dataset_infos["wav_pathname"],
+            features_config["wav_sampling_rate"],
+            dataset_wav_rms,
+            target_wav_rms,
+        )
+        print("Resampling WAV files done")
+
+        print("Extracting source & mel-spectrograms...")
+        tgt_lengths = extract_source_and_mel(dataset_name, format=format)
+        print("Extracting source & mel-spectrograms done")
+
+        if "ema_pathname" in dataset_infos:
+            frames_sampling_rate = features_config["ema_sampling_rate"]
+
+            print("Preprocessing EMA...")
+            items_ema = preprocess_ema(
+                dataset_name,
+                dataset_infos["ema_pathname"],
+                dataset_infos["ema_format"],
+                dataset_infos["ema_sampling_rate"],
+                dataset_infos["ema_scaling_factor"],
+                dataset_infos["ema_coils_order"],
+                dataset_infos["ema_needs_lowpass"],
+                frames_sampling_rate,
+            )
+            print("Preprocessing EMA done")
+
+            print("Extracting articulatory model and parameters...")
+            extract_art_parameters(dataset_name, items_ema, tgt_lengths, format='.npy')
+            print("Extracting articulatory model and parameters done")
+        if "lab_pathname" in dataset_infos:
+            print("Resampling LAB files...")
+            preprocess_lab(
+                dataset_name,
+                dataset_infos["lab_pathname"],
+                dataset_infos["lab_resolution"],
+                frames_sampling_rate,
+            )
+            print("Resampling LAB files done")
+
+        print("Preprocessing %s done" % dataset_name)
+        print("")
 
 
 if __name__ == "__main__":
