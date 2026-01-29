@@ -17,9 +17,9 @@
 This repository implements a framework for modeling the acoustic-to-articulatory mapping problem through self-supervised learning.
 The framework consists of:
 
-1) **Feature extractors**: MFCC or Wav2Vec 2.0 pre-trained representations to represent speech
-2) **Inverse Model**: LSTM-based model mapping acoustic features to articulatory parameters
-3) **Synthesizer**: Feed-forward network converting articulatory parameters to mel-spectrograms
+1) **Feature extractor**: MFCC or Wav2Vec 2.0 pre-trained representations to represent speech
+2) **Inverse model**: LSTM-based model mapping acoustic features to articulatory parameters
+3) **Articulatory synthesizer**: Feed-forward network converting articulatory parameters to mel-spectrograms
 4) **Vocoder**: HiFi-GAN to map mel-spectrograms to raw audio
 
 ![Model Architecture](docs/model.png)
